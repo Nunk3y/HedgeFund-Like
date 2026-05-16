@@ -21,32 +21,32 @@ from app.services.peer_service import list_peer_comparison
 
 
 DARK_STYLE = """
-QMainWindow { background-color: #000000; }
+QMainWindow { background-color: #030712; }
 QWidget#AppRoot {
-    background-color: #000000;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #07111f, stop:0.42 #030712, stop:1 #0b1220);
     color: #f8fafc;
     font-family: Segoe UI, Inter, Arial;
     font-size: 10pt;
 }
 QWidget#TopNav {
-    background-color: #030712;
-    border-bottom: 1px solid #1d4ed8;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #07111f, stop:0.55 #030712, stop:1 #0b1220);
+    border-bottom: 1px solid #1f3a5f;
 }
 QWidget#Workspace {
-    background-color: qradialgradient(cx:0.50, cy:0.00, radius:1.00, stop:0 #0b1b33, stop:0.38 #050914, stop:1 #000000);
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #07111f, stop:0.44 #030712, stop:1 #0b1220);
 }
 QWidget#ControlPanel, QWidget#DecisionPanel {
-    background-color: #07111f;
+    background-color: #0b1220;
     border: 1px solid #334155;
     border-radius: 26px;
 }
 QWidget#PreviewShell {
-    background-color: #020617;
+    background-color: #07111f;
     border: 1px solid #2563eb;
     border-radius: 28px;
 }
 QWidget#DashboardCard, QWidget#DataPanel {
-    background-color: #07111f;
+    background-color: #0b1220;
     border: 1px solid #334155;
     border-radius: 24px;
 }
@@ -56,7 +56,7 @@ QWidget#MiniCard {
     border-radius: 20px;
 }
 QWidget#ActionGroup {
-    background-color: #020617;
+    background-color: #07111f;
     border: 1px solid #263349;
     border-radius: 20px;
 }
