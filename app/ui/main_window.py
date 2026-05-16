@@ -21,208 +21,218 @@ from app.services.peer_service import list_peer_comparison
 
 
 DARK_STYLE = """
-QMainWindow { background-color: #030712; }
+QMainWindow { background-color: #040812; }
 QWidget#AppRoot {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #07111f, stop:0.42 #030712, stop:1 #0b1220);
+    background-color: qradialgradient(cx:0.50, cy:0.00, radius:1.05, stop:0 #123052, stop:0.28 #081426, stop:0.62 #040812, stop:1 #070d18);
     color: #f8fafc;
     font-family: Segoe UI, Inter, Arial;
     font-size: 10pt;
 }
 QWidget#TopNav {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #07111f, stop:0.55 #030712, stop:1 #0b1220);
-    border-bottom: 1px solid #1f3a5f;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #081426, stop:0.50 #050a14, stop:1 #0b1728);
+    border-bottom: 1px solid #233b5f;
 }
 QWidget#Workspace {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #07111f, stop:0.44 #030712, stop:1 #0b1220);
+    background-color: qradialgradient(cx:0.46, cy:0.02, radius:1.15, stop:0 #102a49, stop:0.35 #071426, stop:0.72 #040812, stop:1 #08111f);
 }
 QWidget#ControlPanel, QWidget#DecisionPanel {
-    background-color: #0b1220;
-    border: 1px solid #334155;
-    border-radius: 26px;
+    background-color: #091525;
+    border: 1px solid #3c516d;
+    border-radius: 30px;
 }
 QWidget#PreviewShell {
-    background-color: #07111f;
-    border: 1px solid #2563eb;
-    border-radius: 28px;
+    background-color: qradialgradient(cx:0.50, cy:0.00, radius:1.05, stop:0 #12335c, stop:0.46 #08182c, stop:1 #050914);
+    border: 1px solid #3b82f6;
+    border-radius: 34px;
 }
 QWidget#DashboardCard, QWidget#DataPanel {
-    background-color: #0b1220;
-    border: 1px solid #334155;
-    border-radius: 24px;
+    background-color: #091525;
+    border: 1px solid #3c516d;
+    border-radius: 28px;
 }
 QWidget#MiniCard {
-    background-color: #0f172a;
-    border: 1px solid #3b4a62;
-    border-radius: 20px;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #13223a, stop:1 #08111f);
+    border: 1px solid #4a5f7c;
+    border-radius: 24px;
 }
 QWidget#ActionGroup {
     background-color: #07111f;
-    border: 1px solid #263349;
-    border-radius: 20px;
+    border: 1px solid #2f4158;
+    border-radius: 22px;
 }
 QSplitter::handle {
     background-color: transparent;
-    width: 14px;
+    width: 16px;
 }
 QLabel { color: #e5e7eb; }
 QLabel#Brand {
     color: #ffffff;
-    font-size: 16px;
-    font-weight: 900;
+    font-size: 18px;
+    font-weight: 950;
     letter-spacing: 0.2px;
 }
 QPushButton#NavButton {
     background-color: transparent;
     border: 1px solid transparent;
-    color: #cbd5e1;
+    color: #bfd0e6;
     font-size: 10px;
-    font-weight: 800;
-    padding: 7px 10px;
-    border-radius: 12px;
+    font-weight: 850;
+    padding: 8px 13px;
+    border-radius: 15px;
 }
 QPushButton#NavButton:hover {
-    background-color: #0f172a;
-    border: 1px solid #334155;
+    background-color: #111f34;
+    border: 1px solid #3d5878;
     color: #ffffff;
 }
 QPushButton#NavButton:pressed {
     background-color: #1d4ed8;
-    border: 1px solid #60a5fa;
+    border: 1px solid #93c5fd;
     color: #ffffff;
 }
 QLabel#HeroEyebrow {
-    color: #60a5fa;
+    color: #8bc7ff;
     font-size: 10px;
-    font-weight: 900;
-    letter-spacing: 2.4px;
+    font-weight: 950;
+    letter-spacing: 2.8px;
 }
 QLabel#HeroTitle {
     color: #ffffff;
-    font-size: 40px;
-    font-weight: 900;
-    letter-spacing: -0.8px;
+    font-size: 44px;
+    font-weight: 950;
+    letter-spacing: -1.2px;
 }
 QLabel#HeroSubtitle {
-    color: #dbe4ef;
-    font-size: 14px;
+    color: #d9e7f7;
+    font-size: 15px;
     font-weight: 500;
+}
+QLabel#SignalPill {
+    color: #dbeafe;
+    background-color: #0b2443;
+    border: 1px solid #315b91;
+    border-radius: 15px;
+    padding: 8px 12px;
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: 0.7px;
 }
 QLabel#PanelTitle {
     color: #ffffff;
-    font-size: 15px;
-    font-weight: 850;
+    font-size: 16px;
+    font-weight: 900;
 }
 QLabel#PanelHint {
-    color: #94a3b8;
+    color: #a8bad1;
     font-size: 9px;
-    font-weight: 650;
+    font-weight: 700;
 }
 QLabel#MetricLabel {
     color: #aab7cc;
     font-size: 9px;
-    font-weight: 900;
-    letter-spacing: 1.2px;
+    font-weight: 950;
+    letter-spacing: 1.3px;
 }
 QLabel#MetricValue {
     color: #ffffff;
-    font-size: 30px;
-    font-weight: 900;
+    font-size: 32px;
+    font-weight: 950;
 }
 QLabel#MetricSubtext {
-    color: #94a3b8;
+    color: #9fb0c8;
     font-size: 9px;
-    font-weight: 650;
+    font-weight: 700;
 }
 QLabel#Pill {
     color: #ffffff;
     background-color: #0f2a4f;
-    border: 1px solid #3b82f6;
-    border-radius: 14px;
-    padding: 7px 12px;
-    font-weight: 850;
+    border: 1px solid #4a90ff;
+    border-radius: 16px;
+    padding: 8px 13px;
+    font-weight: 900;
 }
 QLineEdit, QComboBox {
-    background-color: #020617;
-    border: 1px solid #475569;
-    padding: 10px 12px;
-    border-radius: 13px;
+    background-color: #030814;
+    border: 1px solid #52647e;
+    padding: 11px 13px;
+    border-radius: 15px;
     color: #f8fafc;
     selection-background-color: #2563eb;
 }
 QLineEdit:focus, QComboBox:focus {
-    border: 1px solid #60a5fa;
-    background-color: #0b1220;
+    border: 1px solid #93c5fd;
+    background-color: #0b1728;
 }
-QComboBox::drop-down { border: 0px; width: 28px; }
+QComboBox::drop-down { border: 0px; width: 30px; }
 QPushButton {
-    background-color: #0b1220;
+    background-color: #0b1728;
     color: #e5e7eb;
-    border: 1px solid #334155;
-    padding: 10px 14px;
-    border-radius: 14px;
-    font-weight: 800;
+    border: 1px solid #3d506b;
+    padding: 11px 15px;
+    border-radius: 16px;
+    font-weight: 850;
 }
-QPushButton:hover { background-color: #172033; border: 1px solid #64748b; }
+QPushButton:hover { background-color: #17263d; border: 1px solid #6e87a8; }
 QPushButton:pressed { background-color: #050914; }
 QPushButton#HeroButton, QPushButton#PrimaryButton {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563eb, stop:1 #1d4ed8);
-    border: 1px solid #93c5fd;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2f6df6, stop:0.48 #2563eb, stop:1 #1d4ed8);
+    border: 1px solid #a6d1ff;
     color: #ffffff;
-    padding: 12px 22px;
-    border-radius: 18px;
-    font-weight: 900;
+    padding: 13px 26px;
+    border-radius: 20px;
+    font-weight: 950;
 }
 QPushButton#HeroButton:hover, QPushButton#PrimaryButton:hover {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1d4ed8, stop:1 #2563eb);
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:0.50 #2563eb, stop:1 #1e40af);
 }
 QPushButton#DangerButton { background-color: #220d14; border: 1px solid #991b1b; color: #fecaca; }
 QPushButton#DangerButton:hover { background-color: #3a141c; border: 1px solid #ef4444; }
-QPushButton#QuietButton { background-color: #020617; border: 1px solid #334155; color: #cbd5e1; }
+QPushButton#QuietButton { background-color: #06101d; border: 1px solid #3d506b; color: #cbd5e1; }
 QTableWidget {
-    background-color: #020617;
-    alternate-background-color: #0b1220;
+    background-color: #030814;
+    alternate-background-color: #0a1424;
     color: #e5e7eb;
     gridline-color: #172033;
-    border: 1px solid #334155;
-    border-radius: 18px;
+    border: 1px solid #3c516d;
+    border-radius: 20px;
     selection-background-color: #1d4ed8;
     selection-color: #ffffff;
 }
-QTableWidget::item { padding: 8px; border-bottom: 1px solid #172033; }
-QTableWidget::item:hover { background-color: #111827; }
+QTableWidget::item { padding: 9px; border-bottom: 1px solid #172033; }
+QTableWidget::item:hover { background-color: #111f34; }
 QHeaderView::section {
-    background-color: #0f172a;
-    color: #cbd5e1;
-    padding: 10px 9px;
+    background-color: #101b2d;
+    color: #d4e2f4;
+    padding: 11px 10px;
     border: 0px;
-    border-bottom: 1px solid #334155;
-    font-weight: 850;
+    border-bottom: 1px solid #3c516d;
+    font-weight: 900;
 }
 QHeaderView::section:hover { background-color: #1e293b; color: #ffffff; }
 QTabWidget::pane {
-    border: 1px solid #334155;
-    border-radius: 24px;
-    background-color: #030712;
+    border: 1px solid #3c516d;
+    border-radius: 28px;
+    background-color: #050b16;
     top: -1px;
 }
 QTabBar::tab {
-    background-color: #020617;
-    color: #94a3b8;
-    padding: 12px 18px;
+    background-color: #06101d;
+    color: #9fb0c8;
+    padding: 13px 19px;
     margin-right: 7px;
-    border-top-left-radius: 14px;
-    border-top-right-radius: 14px;
-    border: 1px solid #263349;
-    font-weight: 850;
+    border-top-left-radius: 16px;
+    border-top-right-radius: 16px;
+    border: 1px solid #2f4158;
+    font-weight: 900;
 }
-QTabBar::tab:selected { background-color: #0f172a; color: #ffffff; border-bottom: 1px solid #0f172a; }
-QTabBar::tab:hover:!selected { background-color: #07111f; color: #e5e7eb; }
+QTabBar::tab:selected { background-color: #13223a; color: #ffffff; border-bottom: 1px solid #13223a; }
+QTabBar::tab:hover:!selected { background-color: #0b1728; color: #e5e7eb; }
 QTextEdit {
-    background-color: #020617;
-    border: 1px solid #334155;
-    border-radius: 18px;
+    background-color: #030814;
+    border: 1px solid #3c516d;
+    border-radius: 20px;
     color: #e5e7eb;
-    padding: 14px;
+    padding: 15px;
     line-height: 150%;
     selection-background-color: #2563eb;
 }
@@ -308,8 +318,8 @@ def make_metric_card(label: str, value: str, subtext: str) -> tuple[QWidget, QLa
     card = QWidget()
     card.setObjectName("MiniCard")
     layout = QVBoxLayout(card)
-    layout.setContentsMargins(16, 14, 16, 14)
-    layout.setSpacing(4)
+    layout.setContentsMargins(18, 16, 18, 16)
+    layout.setSpacing(5)
     label_widget = QLabel(label.upper())
     label_widget.setObjectName("MetricLabel")
     value_widget = QLabel(value)
@@ -355,8 +365,8 @@ class MainWindow(QMainWindow):
         nav = QWidget()
         nav.setObjectName("TopNav")
         nav_layout = QHBoxLayout(nav)
-        nav_layout.setContentsMargins(18, 10, 18, 10)
-        nav_layout.setSpacing(12)
+        nav_layout.setContentsMargins(22, 12, 22, 12)
+        nav_layout.setSpacing(13)
         brand = QLabel("HedgeFund-Like")
         brand.setObjectName("Brand")
         nav_layout.addWidget(brand)
@@ -375,8 +385,8 @@ class MainWindow(QMainWindow):
         main = QWidget()
         main.setObjectName("Workspace")
         main_layout = QVBoxLayout(main)
-        main_layout.setContentsMargins(28, 24, 28, 24)
-        main_layout.setSpacing(18)
+        main_layout.setContentsMargins(30, 26, 30, 26)
+        main_layout.setSpacing(20)
 
         splitter = QSplitter(Qt.Horizontal)
         splitter.setChildrenCollapsible(False)
@@ -384,8 +394,8 @@ class MainWindow(QMainWindow):
         left = QWidget()
         left.setObjectName("ControlPanel")
         left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(16, 16, 16, 16)
-        left_layout.setSpacing(12)
+        left_layout.setContentsMargins(18, 18, 18, 18)
+        left_layout.setSpacing(14)
         left_title = QLabel("Watchlist Control")
         left_title.setObjectName("PanelTitle")
         left_hint = QLabel("Add tickers, assign peer groups, then run the full local pipeline.")
@@ -403,13 +413,13 @@ class MainWindow(QMainWindow):
         form_group = QWidget()
         form_group.setObjectName("ActionGroup")
         form_group_layout = QVBoxLayout(form_group)
-        form_group_layout.setContentsMargins(14, 14, 14, 14)
-        form_group_layout.setSpacing(10)
+        form_group_layout.setContentsMargins(15, 15, 15, 15)
+        form_group_layout.setSpacing(11)
         setup_title = QLabel("Ticker Setup")
         setup_title.setObjectName("PanelTitle")
         form_group_layout.addWidget(setup_title)
         form = QFormLayout()
-        form.setVerticalSpacing(9)
+        form.setVerticalSpacing(10)
         self.ticker_input = QLineEdit()
         self.company_input = QLineEdit()
         self.peer_group_input = QComboBox()
@@ -434,8 +444,8 @@ class MainWindow(QMainWindow):
         action_group = QWidget()
         action_group.setObjectName("ActionGroup")
         action_layout = QVBoxLayout(action_group)
-        action_layout.setContentsMargins(14, 14, 14, 14)
-        action_layout.setSpacing(9)
+        action_layout.setContentsMargins(15, 15, 15, 15)
+        action_layout.setSpacing(10)
         action_title = QLabel("Actions")
         action_title.setObjectName("PanelTitle")
         action_layout.addWidget(action_title)
@@ -460,8 +470,8 @@ class MainWindow(QMainWindow):
         right = QWidget()
         right.setObjectName("DecisionPanel")
         right_layout = QVBoxLayout(right)
-        right_layout.setContentsMargins(16, 16, 16, 16)
-        right_layout.setSpacing(12)
+        right_layout.setContentsMargins(18, 18, 18, 18)
+        right_layout.setSpacing(14)
         right_title = QLabel("Decision Brief")
         right_title.setObjectName("PanelTitle")
         right_hint = QLabel("Selected ticker context and pipeline result.")
@@ -502,14 +512,14 @@ class MainWindow(QMainWindow):
     def build_overview_tab(self, tabs: QTabWidget) -> None:
         overview = QWidget()
         layout = QVBoxLayout(overview)
-        layout.setContentsMargins(20, 22, 20, 20)
-        layout.setSpacing(18)
+        layout.setContentsMargins(22, 24, 22, 22)
+        layout.setSpacing(20)
 
         hero = QWidget()
         hero.setObjectName("PreviewShell")
         hero_layout = QVBoxLayout(hero)
-        hero_layout.setContentsMargins(34, 30, 34, 30)
-        hero_layout.setSpacing(16)
+        hero_layout.setContentsMargins(38, 34, 38, 34)
+        hero_layout.setSpacing(18)
 
         eyebrow = QLabel("SCREEN. RANK. RESEARCH. REPEAT.")
         eyebrow.setObjectName("HeroEyebrow")
@@ -524,6 +534,14 @@ class MainWindow(QMainWindow):
         subtitle.setObjectName("HeroSubtitle")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setWordWrap(True)
+        signal_row = QHBoxLayout()
+        signal_row.setSpacing(10)
+        signal_row.addStretch()
+        for text in ["LOCAL SQLITE CACHE", "SEC + FINNHUB PIPELINE", "QUALITY / VALUE / RISK FLAGS"]:
+            signal = QLabel(text)
+            signal.setObjectName("SignalPill")
+            signal_row.addWidget(signal)
+        signal_row.addStretch()
         hero_button_row = QHBoxLayout()
         hero_button_row.addStretch()
         hero_button = QPushButton("Run Full Pipeline")
@@ -535,10 +553,11 @@ class MainWindow(QMainWindow):
         hero_layout.addWidget(eyebrow)
         hero_layout.addWidget(title)
         hero_layout.addWidget(subtitle)
+        hero_layout.addLayout(signal_row)
         hero_layout.addLayout(hero_button_row)
 
         metric_grid = QGridLayout()
-        metric_grid.setSpacing(12)
+        metric_grid.setSpacing(14)
         card, self.metric_total, self.metric_total_sub = make_metric_card("Universe", "0", "tracked tickers")
         metric_grid.addWidget(card, 0, 0)
         card, self.metric_deep_dive, self.metric_deep_dive_sub = make_metric_card("Deep Dive", "0", "green candidates")
@@ -553,9 +572,9 @@ class MainWindow(QMainWindow):
         dashboard = QWidget()
         dashboard.setObjectName("DashboardCard")
         dashboard_layout = QVBoxLayout(dashboard)
-        dashboard_layout.setContentsMargins(18, 18, 18, 18)
-        dashboard_layout.setSpacing(10)
-        dash_title = QLabel("Research Dashboard Preview")
+        dashboard_layout.setContentsMargins(20, 20, 20, 20)
+        dashboard_layout.setSpacing(12)
+        dash_title = QLabel("Signal Board")
         dash_title.setObjectName("PanelTitle")
         dash_hint = QLabel("Readable screening views stay separate from raw SEC, Finnhub, cache, and normalized data tabs.")
         dash_hint.setObjectName("PanelHint")
@@ -598,7 +617,7 @@ class MainWindow(QMainWindow):
         cache_panel = QWidget()
         cache_panel.setObjectName("DataPanel")
         cache_layout = QVBoxLayout(cache_panel)
-        cache_layout.setContentsMargins(14, 14, 14, 14)
+        cache_layout.setContentsMargins(16, 16, 16, 16)
         cache_tools = QHBoxLayout()
         cache_label = QLabel("API Cache")
         cache_label.setObjectName("PanelTitle")
