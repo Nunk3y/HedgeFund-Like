@@ -218,6 +218,10 @@ QTableWidget::item {
     border-bottom: 1px solid #111827;
 }
 
+QTableWidget::item:hover {
+    background-color: #111827;
+}
+
 QHeaderView::section {
     background-color: #101827;
     color: #9aa8bd;
@@ -225,6 +229,11 @@ QHeaderView::section {
     border: 0px;
     border-bottom: 1px solid #2b3a52;
     font-weight: 800;
+}
+
+QHeaderView::section:hover {
+    background-color: #152033;
+    color: #f8fafc;
 }
 
 QTabWidget::pane {
@@ -266,27 +275,58 @@ QTextEdit {
     selection-background-color: #2563eb;
 }
 
-QScrollBar:vertical, QScrollBar:horizontal {
-    background-color: #080c13;
-    border: 0px;
-    width: 11px;
-    height: 11px;
+QScrollBar:vertical {
+    background-color: transparent;
+    width: 14px;
+    margin: 6px 3px 6px 3px;
 }
 
-QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
-    background-color: #334155;
-    border-radius: 5px;
-    min-height: 32px;
-    min-width: 32px;
+QScrollBar::handle:vertical {
+    background-color: #293548;
+    border: 3px solid #080c13;
+    border-radius: 7px;
+    min-height: 44px;
 }
 
-QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
-    background-color: #64748b;
+QScrollBar::handle:vertical:hover {
+    background-color: #4b5f7a;
 }
 
-QScrollBar::add-line, QScrollBar::sub-line {
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
     height: 0px;
+    background: none;
+    border: none;
+}
+
+QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical {
+    background: transparent;
+}
+
+QScrollBar:horizontal {
+    background-color: transparent;
+    height: 14px;
+    margin: 3px 6px 3px 6px;
+}
+
+QScrollBar::handle:horizontal {
+    background-color: #293548;
+    border: 3px solid #080c13;
+    border-radius: 7px;
+    min-width: 44px;
+}
+
+QScrollBar::handle:horizontal:hover {
+    background-color: #4b5f7a;
+}
+
+QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal {
     width: 0px;
+    background: none;
+    border: none;
+}
+
+QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal {
+    background: transparent;
 }
 """
 
@@ -321,6 +361,8 @@ def polish_table(table: QTableWidget) -> None:
     table.verticalHeader().setVisible(False)
     table.horizontalHeader().setStretchLastSection(True)
     table.setSortingEnabled(True)
+    table.setMouseTracking(True)
+    table.setColumnWidth(0, 92)
 
 
 def make_metric_card(label: str, value: str, subtext: str) -> tuple[QWidget, QLabel, QLabel]:
@@ -477,8 +519,6 @@ class MainWindow(QMainWindow):
         buttons = [
             ("Add / Update Ticker", self.add_ticker_clicked, "PrimaryButton"),
             ("Run Full Pipeline", self.run_pipeline_clicked, "PrimaryButton"),
-            ("Refresh SEC Data", self.refresh_sec_clicked, "QuietButton"),
-            ("Refresh Finnhub Data", self.refresh_finnhub_clicked, "QuietButton"),
             ("Save API Settings", self.save_api_settings, "QuietButton"),
             ("Delete Selected Ticker", self.delete_selected_ticker_clicked, "DangerButton"),
         ]
@@ -774,27 +814,33 @@ class MainWindow(QMainWindow):
                     filtered.append(row)
             rows = filtered
 
+        self.cache_table.setSortingEnabled(False)
         self.cache_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
             values = [row["ticker"], row["source"], row["endpoint"], row["raw_field"], row["raw_value"], row["fiscal_year"], row["status"], row["sec_concept"], row["unit"], row["filed"]]
             for c, val in enumerate(values):
                 self.cache_table.setItem(r, c, QTableWidgetItem("" if val is None else str(val)))
+        self.cache_table.setSortingEnabled(True)
         self.cache_table.resizeColumnsToContents()
 
     def refresh_market_table(self, ticker=None) -> None:
         rows = list_market_data(ticker=ticker)
+        self.market_table.setSortingEnabled(False)
         self.market_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
             for c, col in enumerate(self.market_columns):
                 self.market_table.setItem(r, c, QTableWidgetItem(fmt(row[col])))
+        self.market_table.setSortingEnabled(True)
         self.market_table.resizeColumnsToContents()
 
     def refresh_readiness_table(self, ticker=None) -> None:
         rows = list_model_readiness(ticker=ticker)
+        self.readiness_table.setSortingEnabled(False)
         self.readiness_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
             for c, col in enumerate(self.readiness_columns):
                 self.readiness_table.setItem(r, c, QTableWidgetItem(fmt(row[col])))
+        self.readiness_table.setSortingEnabled(True)
         self.readiness_table.resizeColumnsToContents()
 
     def refresh_master_table(self) -> None:
