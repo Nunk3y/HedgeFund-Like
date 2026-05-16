@@ -399,7 +399,7 @@ FLAG_COLUMNS = {
 }
 
 
-DEFAULT_SEC_USER_AGENT = "Sebastiaan Vriese savriese@gmail.com"
+DEFAULT_SEC_USER_AGENT = ""
 
 DEFAULT_PEER_GROUPS = [
     "",
@@ -497,7 +497,10 @@ class MainWindow(QMainWindow):
         self.peer_group_input.addItems(DEFAULT_PEER_GROUPS)
         self.sec_user_agent = QLineEdit(get_setting("sec_user_agent", DEFAULT_SEC_USER_AGENT))
         self.finnhub_api_key = QLineEdit(get_setting("finnhub_api_key", ""))
-        self.finnhub_api_key.setPlaceholderText("Paste Finnhub API key")
+        self.sec_user_agent.setPlaceholderText("Name and email for SEC requests; saved locally only")
+        self.finnhub_api_key.setPlaceholderText("Paste Finnhub API key; saved locally only")
+        self.sec_user_agent.editingFinished.connect(self.save_api_settings_silent)
+        self.finnhub_api_key.editingFinished.connect(self.save_api_settings_silent)
         self.ticker_input.setPlaceholderText("NVDA")
         self.company_input.setPlaceholderText("Optional company name")
         form.addRow("Ticker", self.ticker_input)
@@ -665,7 +668,7 @@ class MainWindow(QMainWindow):
             "Workflow\n"
             "1. Add or select a ticker.\n"
             "2. Assign the correct peer group.\n"
-            "3. Save API settings once.\n"
+            "3. Enter API settings once. They are stored only in your local tech_screener.db file.\n"
             "4. Run the full pipeline.\n\n"
             "The Overview tab ranks names by score and highlights candidates that deserve deeper research."
         )
@@ -681,9 +684,16 @@ class MainWindow(QMainWindow):
         self.selected_ticker = None
         self.refresh_all_tables()
 
-    def save_api_settings(self) -> None:
+    def closeEvent(self, event) -> None:
+        self.save_api_settings_silent()
+        super().closeEvent(event)
+
+    def save_api_settings_silent(self) -> None:
         set_setting("sec_user_agent", self.sec_user_agent.text().strip())
         set_setting("finnhub_api_key", self.finnhub_api_key.text().strip())
+
+    def save_api_settings(self) -> None:
+        self.save_api_settings_silent()
         self.details.setText("API settings saved locally in tech_screener.db. They are not saved to GitHub.")
 
     def current_ticker(self) -> str:
@@ -784,6 +794,9 @@ class MainWindow(QMainWindow):
             QMessageBox.warning(self, "No ticker selected", "Select a ticker or enter one."); return
         ua = self.sec_user_agent.text().strip()
         key = self.finnhub_api_key.text().strip()
+        if not ua or "@" not in ua:
+            QMessageBox.warning(self, "SEC User-Agent required", "Enter your name and email in the SEC User-Agent field. It is saved only in your local database.")
+            return
         if not key:
             QMessageBox.warning(self, "Finnhub API key required", "Paste your Finnhub API key before running the full pipeline.")
             return
