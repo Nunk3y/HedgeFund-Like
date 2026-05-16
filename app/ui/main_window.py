@@ -20,16 +20,212 @@ from app.services.peer_service import list_peer_comparison
 
 
 DARK_STYLE = """
-QMainWindow, QWidget { background-color: #0f131a; color: #d8dde8; font-family: Segoe UI; font-size: 10pt; }
-QLineEdit, QComboBox { background-color: #151b24; border: 1px solid #2a3443; padding: 6px; border-radius: 4px; color: #e8edf7; }
-QPushButton { background-color: #1f6feb; color: white; border: 0px; padding: 7px 10px; border-radius: 4px; }
-QPushButton:hover { background-color: #388bfd; }
-QTableWidget { background-color: #0b0f14; color: #d8dde8; gridline-color: #222c3a; border: 1px solid #222c3a; }
-QHeaderView::section { background-color: #151b24; color: #d8dde8; padding: 6px; border: 1px solid #222c3a; }
-QTabWidget::pane { border: 1px solid #222c3a; }
-QTabBar::tab { background-color: #151b24; color: #d8dde8; padding: 8px 12px; }
-QTabBar::tab:selected { background-color: #1f6feb; }
-QTextEdit { background-color: #0b0f14; border: 1px solid #222c3a; color: #d8dde8; }
+QMainWindow {
+    background-color: #070a0f;
+}
+
+QWidget#AppRoot {
+    background-color: #070a0f;
+    color: #e5e7eb;
+    font-family: Segoe UI, Inter, Arial;
+    font-size: 10pt;
+}
+
+QWidget#TopBar {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0d1422, stop:1 #101827);
+    border: 1px solid #1f2937;
+    border-radius: 18px;
+}
+
+QWidget#Sidebar, QWidget#InsightPanel, QWidget#CachePanel {
+    background-color: #0d111b;
+    border: 1px solid #1f2937;
+    border-radius: 18px;
+}
+
+QSplitter::handle {
+    background-color: #070a0f;
+    width: 10px;
+}
+
+QLabel {
+    color: #e5e7eb;
+}
+
+QLabel#AppTitle {
+    color: #f8fafc;
+    font-size: 26px;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+}
+
+QLabel#AppSubtitle {
+    color: #94a3b8;
+    font-size: 11px;
+    font-weight: 500;
+}
+
+QLabel#SectionTitle {
+    color: #f8fafc;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+QLabel#SectionHint {
+    color: #64748b;
+    font-size: 9px;
+}
+
+QLineEdit, QComboBox {
+    background-color: #111827;
+    border: 1px solid #263244;
+    padding: 8px 10px;
+    border-radius: 10px;
+    color: #f8fafc;
+    selection-background-color: #2563eb;
+}
+
+QLineEdit:focus, QComboBox:focus {
+    border: 1px solid #3b82f6;
+    background-color: #0f172a;
+}
+
+QComboBox::drop-down {
+    border: 0px;
+    width: 26px;
+}
+
+QPushButton {
+    background-color: #182235;
+    color: #e5e7eb;
+    border: 1px solid #2b3a52;
+    padding: 9px 12px;
+    border-radius: 11px;
+    font-weight: 650;
+}
+
+QPushButton:hover {
+    background-color: #22314a;
+    border: 1px solid #3b4e6c;
+}
+
+QPushButton:pressed {
+    background-color: #111827;
+}
+
+QPushButton#PrimaryButton {
+    background-color: #2563eb;
+    border: 1px solid #3b82f6;
+    color: white;
+}
+
+QPushButton#PrimaryButton:hover {
+    background-color: #1d4ed8;
+}
+
+QPushButton#DangerButton {
+    background-color: #2a1116;
+    border: 1px solid #7f1d1d;
+    color: #fecaca;
+}
+
+QPushButton#DangerButton:hover {
+    background-color: #3f151c;
+    border: 1px solid #991b1b;
+}
+
+QPushButton#QuietButton {
+    background-color: #111827;
+    border: 1px solid #263244;
+    color: #cbd5e1;
+}
+
+QTableWidget {
+    background-color: #0b0f17;
+    alternate-background-color: #0f1520;
+    color: #dbe4ef;
+    gridline-color: #182235;
+    border: 1px solid #1f2937;
+    border-radius: 14px;
+    selection-background-color: #1d4ed8;
+    selection-color: #ffffff;
+}
+
+QTableWidget::item {
+    padding: 6px;
+    border-bottom: 1px solid #111827;
+}
+
+QHeaderView::section {
+    background-color: #111827;
+    color: #94a3b8;
+    padding: 8px 9px;
+    border: 0px;
+    border-bottom: 1px solid #263244;
+    font-weight: 700;
+}
+
+QTabWidget::pane {
+    border: 1px solid #1f2937;
+    border-radius: 16px;
+    background-color: #0b0f17;
+    top: -1px;
+}
+
+QTabBar::tab {
+    background-color: #0d111b;
+    color: #94a3b8;
+    padding: 10px 16px;
+    margin-right: 6px;
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    border: 1px solid #1f2937;
+    font-weight: 650;
+}
+
+QTabBar::tab:selected {
+    background-color: #172033;
+    color: #f8fafc;
+    border-bottom: 1px solid #172033;
+}
+
+QTabBar::tab:hover:!selected {
+    background-color: #111827;
+    color: #cbd5e1;
+}
+
+QTextEdit {
+    background-color: #0b0f17;
+    border: 1px solid #1f2937;
+    border-radius: 14px;
+    color: #dbe4ef;
+    padding: 10px;
+    line-height: 145%;
+    selection-background-color: #2563eb;
+}
+
+QScrollBar:vertical, QScrollBar:horizontal {
+    background-color: #0b0f17;
+    border: 0px;
+    width: 11px;
+    height: 11px;
+}
+
+QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
+    background-color: #334155;
+    border-radius: 5px;
+    min-height: 30px;
+    min-width: 30px;
+}
+
+QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
+    background-color: #475569;
+}
+
+QScrollBar::add-line, QScrollBar::sub-line {
+    height: 0px;
+    width: 0px;
+}
 """
 
 
@@ -44,16 +240,24 @@ def fmt(value):
 def flag_colors(text: str):
     text = text or ""
     if text.startswith("GREEN"):
-        return QColor("#123d22"), QColor("#7ee787")
+        return QColor("#0f3d24"), QColor("#86efac")
     if text.startswith("YELLOW"):
-        return QColor("#4a3608"), QColor("#f2cc60")
+        return QColor("#423309"), QColor("#fde68a")
     if text.startswith("RED"):
-        return QColor("#4a1515"), QColor("#ff7b72")
+        return QColor("#43171b"), QColor("#fca5a5")
     if text.startswith("GRAY"):
-        return QColor("#30363d"), QColor("#c9d1d9")
+        return QColor("#1f2937"), QColor("#cbd5e1")
     if text.startswith("PURPLE"):
-        return QColor("#3b1d5c"), QColor("#d2a8ff")
+        return QColor("#321a55"), QColor("#d8b4fe")
     return None, None
+
+
+def polish_table(table: QTableWidget) -> None:
+    table.setAlternatingRowColors(True)
+    table.setShowGrid(False)
+    table.setWordWrap(False)
+    table.verticalHeader().setVisible(False)
+    table.horizontalHeader().setStretchLastSection(True)
 
 
 FLAG_COLUMNS = {
@@ -99,35 +303,69 @@ DEFAULT_PEER_GROUPS = [
 class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
-        self.setWindowTitle("Tech Stock Screener")
-        self.resize(1600, 940)
+        self.setWindowTitle("HedgeFund-Like")
+        self.resize(1680, 980)
         self.setStyleSheet(DARK_STYLE)
 
         root = QWidget()
+        root.setObjectName("AppRoot")
         root_layout = QVBoxLayout(root)
-        top = QHBoxLayout()
-        title = QLabel("Tech Stock Screener")
-        title.setStyleSheet("font-size: 22px; font-weight: bold;")
-        subtitle = QLabel("Research terminal — v8 Peer Groups + HUD Foundation")
-        subtitle.setStyleSheet("color: #8b949e;")
-        top.addWidget(title); top.addWidget(subtitle); top.addStretch()
-        root_layout.addLayout(top)
+        root_layout.setContentsMargins(14, 14, 14, 14)
+        root_layout.setSpacing(12)
+
+        top_bar = QWidget()
+        top_bar.setObjectName("TopBar")
+        top = QHBoxLayout(top_bar)
+        top.setContentsMargins(18, 14, 18, 14)
+        title_block = QVBoxLayout()
+        title_block.setSpacing(2)
+        title = QLabel("HedgeFund-Like")
+        title.setObjectName("AppTitle")
+        subtitle = QLabel("Private stock research terminal · watchlist scoring · peer comparison · data quality checks")
+        subtitle.setObjectName("AppSubtitle")
+        title_block.addWidget(title)
+        title_block.addWidget(subtitle)
+        status_badge = QLabel("LOCAL-FIRST  ·  SEC + FINNHUB")
+        status_badge.setStyleSheet("color: #bfdbfe; background-color: #102447; border: 1px solid #1d4ed8; border-radius: 12px; padding: 7px 12px; font-weight: 700;")
+        top.addLayout(title_block)
+        top.addStretch()
+        top.addWidget(status_badge)
+        root_layout.addWidget(top_bar)
 
         splitter = QSplitter(Qt.Horizontal)
 
-        left = QWidget(); left_layout = QVBoxLayout(left)
-        left_label = QLabel("Watchlist"); left_label.setStyleSheet("font-size: 15px; font-weight: bold;")
+        left = QWidget()
+        left.setObjectName("Sidebar")
+        left_layout = QVBoxLayout(left)
+        left_layout.setContentsMargins(14, 14, 14, 14)
+        left_layout.setSpacing(10)
+        left_label = QLabel("Watchlist")
+        left_label.setObjectName("SectionTitle")
+        left_hint = QLabel("Select a ticker, update its peer group, then refresh data.")
+        left_hint.setObjectName("SectionHint")
         left_layout.addWidget(left_label)
-        self.watchlist_table = QTableWidget(); self.watchlist_table.setColumnCount(3)
+        left_layout.addWidget(left_hint)
+        self.watchlist_table = QTableWidget()
+        self.watchlist_table.setColumnCount(3)
         self.watchlist_table.setHorizontalHeaderLabels(["Ticker", "Company", "Peer Group"])
         self.watchlist_table.cellClicked.connect(self.watchlist_clicked)
+        polish_table(self.watchlist_table)
         left_layout.addWidget(self.watchlist_table)
 
         form = QFormLayout()
-        self.ticker_input = QLineEdit(); self.company_input = QLineEdit()
-        self.peer_group_input = QComboBox(); self.peer_group_input.setEditable(True); self.peer_group_input.addItems(DEFAULT_PEER_GROUPS)
+        form.setLabelAlignment(Qt.AlignLeft)
+        form.setFormAlignment(Qt.AlignTop)
+        form.setVerticalSpacing(9)
+        self.ticker_input = QLineEdit()
+        self.company_input = QLineEdit()
+        self.peer_group_input = QComboBox()
+        self.peer_group_input.setEditable(True)
+        self.peer_group_input.addItems(DEFAULT_PEER_GROUPS)
         self.sec_user_agent = QLineEdit(get_setting("sec_user_agent", DEFAULT_SEC_USER_AGENT))
-        self.finnhub_api_key = QLineEdit(get_setting("finnhub_api_key", "")); self.finnhub_api_key.setPlaceholderText("Paste Finnhub API key")
+        self.finnhub_api_key = QLineEdit(get_setting("finnhub_api_key", ""))
+        self.finnhub_api_key.setPlaceholderText("Paste Finnhub API key")
+        self.ticker_input.setPlaceholderText("NVDA")
+        self.company_input.setPlaceholderText("Optional company name")
         form.addRow("Ticker", self.ticker_input)
         form.addRow("Company", self.company_input)
         form.addRow("Peer Group", self.peer_group_input)
@@ -136,19 +374,25 @@ class MainWindow(QMainWindow):
         left_layout.addLayout(form)
 
         buttons = [
-            ("Add / Update Ticker", self.add_ticker_clicked),
-            ("Delete Selected Ticker", self.delete_selected_ticker_clicked),
-            ("Save API Settings", self.save_api_settings),
-            ("Refresh SEC Data", self.refresh_sec_clicked),
-            ("Refresh Finnhub Data", self.refresh_finnhub_clicked),
-            ("Run SEC + Finnhub → Market Data → Readiness", self.run_pipeline_clicked),
+            ("Add / Update Ticker", self.add_ticker_clicked, "PrimaryButton"),
+            ("Delete Selected Ticker", self.delete_selected_ticker_clicked, "DangerButton"),
+            ("Save API Settings", self.save_api_settings, "QuietButton"),
+            ("Refresh SEC Data", self.refresh_sec_clicked, "QuietButton"),
+            ("Refresh Finnhub Data", self.refresh_finnhub_clicked, "QuietButton"),
+            ("Run SEC + Finnhub → Market Data → Readiness", self.run_pipeline_clicked, "PrimaryButton"),
         ]
-        for text, fn in buttons:
-            b = QPushButton(text); b.clicked.connect(fn); left_layout.addWidget(b)
+        for text, fn, style_name in buttons:
+            b = QPushButton(text)
+            b.setObjectName(style_name)
+            b.setCursor(Qt.PointingHandCursor)
+            b.clicked.connect(fn)
+            left_layout.addWidget(b)
 
         center_tabs = QTabWidget()
+        center_tabs.setObjectName("WorkspaceTabs")
 
-        self.hud = QTextEdit(); self.hud.setReadOnly(True)
+        self.hud = QTextEdit()
+        self.hud.setReadOnly(True)
         center_tabs.addTab(self.hud, "HUD")
 
         self.master_columns = [
@@ -160,8 +404,10 @@ class MainWindow(QMainWindow):
             "EV/Revenue", "EV/FCF", "P/S", "P/E", "Beta", "52W High", "52W Low", "Cash Runway",
             "Readiness", "Next Action", "Missing / Weak Areas", "Source Status"
         ]
-        self.master_table = QTableWidget(); self.master_table.setColumnCount(len(self.master_columns))
+        self.master_table = QTableWidget()
+        self.master_table.setColumnCount(len(self.master_columns))
         self.master_table.setHorizontalHeaderLabels(self.master_columns)
+        polish_table(self.master_table)
         center_tabs.addTab(self.master_table, "Master Watchlist")
 
         self.peer_columns = [
@@ -176,19 +422,29 @@ class MainWindow(QMainWindow):
             "Current Ratio", "Peer Median Current Ratio",
             "Readiness", "Missing / Weak Areas"
         ]
-        self.peer_table = QTableWidget(); self.peer_table.setColumnCount(len(self.peer_columns))
+        self.peer_table = QTableWidget()
+        self.peer_table.setColumnCount(len(self.peer_columns))
         self.peer_table.setHorizontalHeaderLabels(self.peer_columns)
+        polish_table(self.peer_table)
         center_tabs.addTab(self.peer_table, "Peer Comparison")
 
-        cache_panel = QWidget(); cache_layout = QVBoxLayout(cache_panel)
+        cache_panel = QWidget()
+        cache_panel.setObjectName("CachePanel")
+        cache_layout = QVBoxLayout(cache_panel)
+        cache_layout.setContentsMargins(12, 12, 12, 12)
         cache_tools = QHBoxLayout()
-        cache_tools.addWidget(QLabel("API Cache Filter"))
-        self.cache_filter_input = QLineEdit(); self.cache_filter_input.setPlaceholderText("Filter visible cache rows, e.g. cash, capex, operating, expenditures")
+        cache_label = QLabel("API Cache Filter")
+        cache_label.setObjectName("SectionTitle")
+        cache_tools.addWidget(cache_label)
+        self.cache_filter_input = QLineEdit()
+        self.cache_filter_input.setPlaceholderText("Filter visible cache rows, e.g. cash, capex, operating, expenditures")
         self.cache_filter_input.textChanged.connect(lambda _: self.refresh_cache_table(self.current_ticker() or None))
         cache_tools.addWidget(self.cache_filter_input)
         cache_layout.addLayout(cache_tools)
-        self.cache_table = QTableWidget(); self.cache_table.setColumnCount(10)
+        self.cache_table = QTableWidget()
+        self.cache_table.setColumnCount(10)
         self.cache_table.setHorizontalHeaderLabels(["Ticker", "Source", "Endpoint", "Field", "Value", "FY", "Status", "Concept", "Unit", "Filed"])
+        polish_table(self.cache_table)
         cache_layout.addWidget(self.cache_table)
         center_tabs.addTab(cache_panel, "API Cache")
 
@@ -199,27 +455,50 @@ class MainWindow(QMainWindow):
             "operating_cash_flow_raw","capex_raw","fcf_raw","cash_raw","debt_raw","net_debt_raw",
             "current_ratio","equity_raw","sbc_raw","rd_raw","sga_raw","dilution_1y","dilution_3y","source_status"
         ]
-        self.market_table = QTableWidget(); self.market_table.setColumnCount(len(self.market_columns))
+        self.market_table = QTableWidget()
+        self.market_table.setColumnCount(len(self.market_columns))
         self.market_table.setHorizontalHeaderLabels(self.market_columns)
+        polish_table(self.market_table)
         center_tabs.addTab(self.market_table, "Market Data")
 
         self.readiness_columns = [
             "ticker","company","peer_group","price_ok","market_cap_ok","shares_ok","revenue_ok","gross_profit_ok","ebitda_ok","fcf_ok",
             "cash_ok","debt_ok","liquidity_ok","dilution_ok","sbc_rd_sga_ok","core_data_score","readiness","next_action","missing_weak_areas"
         ]
-        self.readiness_table = QTableWidget(); self.readiness_table.setColumnCount(len(self.readiness_columns))
+        self.readiness_table = QTableWidget()
+        self.readiness_table.setColumnCount(len(self.readiness_columns))
         self.readiness_table.setHorizontalHeaderLabels(self.readiness_columns)
+        polish_table(self.readiness_table)
         center_tabs.addTab(self.readiness_table, "Model Readiness")
 
-        right = QWidget(); right_layout = QVBoxLayout(right)
-        right_label = QLabel("Details / HUD Preview"); right_label.setStyleSheet("font-size: 15px; font-weight: bold;")
+        right = QWidget()
+        right.setObjectName("InsightPanel")
+        right_layout = QVBoxLayout(right)
+        right_layout.setContentsMargins(14, 14, 14, 14)
+        right_layout.setSpacing(10)
+        right_label = QLabel("Decision Panel")
+        right_label.setObjectName("SectionTitle")
+        right_hint = QLabel("Ticker context, pipeline results, and next-action guidance.")
+        right_hint.setObjectName("SectionHint")
         right_layout.addWidget(right_label)
-        self.details = QTextEdit(); self.details.setReadOnly(True)
-        self.details.setText("Select a ticker.\n\nWorkflow:\n1. Add/update ticker with Peer Group\n2. Save API Settings once\n3. Refresh data or run the full pipeline")
+        right_layout.addWidget(right_hint)
+        self.details = QTextEdit()
+        self.details.setReadOnly(True)
+        self.details.setText(
+            "Select a ticker to begin.\n\n"
+            "Workflow\n"
+            "1. Add or select a ticker.\n"
+            "2. Assign the correct peer group.\n"
+            "3. Save API settings once.\n"
+            "4. Run the full pipeline.\n\n"
+            "The HUD ranks names by score and highlights candidates that deserve deeper research."
+        )
         right_layout.addWidget(self.details)
 
-        splitter.addWidget(left); splitter.addWidget(center_tabs); splitter.addWidget(right)
-        splitter.setSizes([360, 890, 350])
+        splitter.addWidget(left)
+        splitter.addWidget(center_tabs)
+        splitter.addWidget(right)
+        splitter.setSizes([390, 930, 360])
         root_layout.addWidget(splitter)
         self.setCentralWidget(root)
 
@@ -280,7 +559,7 @@ class MainWindow(QMainWindow):
         if not item:
             return
         self.selected_ticker = item.text()
-        self.details.setText(f"{self.selected_ticker}\n\nSelected.")
+        self.details.setText(f"{self.selected_ticker}\n\nSelected. Run the full pipeline or inspect existing data in the workspace tabs.")
         self.refresh_all_tables(self.selected_ticker)
 
     def refresh_sec_clicked(self) -> None:
