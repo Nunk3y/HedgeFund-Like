@@ -3,21 +3,43 @@ import ctypes
 from PySide6.QtCore import Qt
 from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
-    QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
-    QPushButton, QTableWidget, QTableWidgetItem, QMessageBox, QSplitter, QTextEdit,
-    QTabWidget, QFormLayout, QComboBox, QGridLayout
+    QApplication,
+    QComboBox,
+    QFormLayout,
+    QGridLayout,
+    QHBoxLayout,
+    QLabel,
+    QLineEdit,
+    QMainWindow,
+    QMessageBox,
+    QPushButton,
+    QSplitter,
+    QTableWidget,
+    QTableWidgetItem,
+    QTabWidget,
+    QTextEdit,
+    QVBoxLayout,
+    QWidget,
 )
 
 from app.db.database import (
-    init_db, add_ticker, delete_ticker, list_tickers, insert_api_cache_rows, list_api_cache,
-    list_market_data, list_model_readiness, get_setting, set_setting
+    add_ticker,
+    delete_ticker,
+    get_setting,
+    init_db,
+    insert_api_cache_rows,
+    list_api_cache,
+    list_market_data,
+    list_model_readiness,
+    list_tickers,
+    set_setting,
 )
-from app.services.sec_service import refresh_sec_rows
 from app.services.finnhub_service import refresh_finnhub_rows
 from app.services.market_data_service import normalize_market_data_for_ticker
-from app.services.readiness_service import calculate_model_readiness_for_ticker
-from app.services.watchlist_service import list_master_watchlist
 from app.services.peer_service import list_peer_comparison
+from app.services.readiness_service import calculate_model_readiness_for_ticker
+from app.services.sec_service import refresh_sec_rows
+from app.services.watchlist_service import list_master_watchlist
 
 
 DARK_STYLE = """
@@ -45,68 +67,24 @@ QWidget#PreviewShell {
     border: 1px solid #3b82f6;
     border-radius: 34px;
 }
-QWidget#DashboardCard, QWidget#DataPanel {
-    background-color: #091525;
-    border: 1px solid #3c516d;
-    border-radius: 28px;
+QWidget#DashboardCard, QWidget#DataPanel, QWidget#ActionGroup {
+    background-color: #07111f;
+    border: 1px solid #2f4158;
+    border-radius: 22px;
 }
 QWidget#MiniCard {
     background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #13223a, stop:1 #08111f);
     border: 1px solid #4a5f7c;
     border-radius: 24px;
 }
-QWidget#ActionGroup {
-    background-color: #07111f;
-    border: 1px solid #2f4158;
-    border-radius: 22px;
-}
-QSplitter::handle {
-    background-color: transparent;
-    width: 16px;
-}
+QSplitter::handle { background-color: transparent; width: 16px; }
 QLabel { color: #e5e7eb; }
-QLabel#Brand {
-    color: #ffffff;
-    font-size: 18px;
-    font-weight: 950;
-    letter-spacing: 0.2px;
-}
-QPushButton#NavButton {
-    background-color: transparent;
-    border: 1px solid transparent;
-    color: #bfd0e6;
-    font-size: 10px;
-    font-weight: 850;
-    padding: 8px 13px;
-    border-radius: 15px;
-}
-QPushButton#NavButton:hover {
-    background-color: #111f34;
-    border: 1px solid #3d5878;
-    color: #ffffff;
-}
-QPushButton#NavButton:pressed {
-    background-color: #1d4ed8;
-    border: 1px solid #93c5fd;
-    color: #ffffff;
-}
-QLabel#HeroEyebrow {
-    color: #8bc7ff;
-    font-size: 10px;
-    font-weight: 950;
-    letter-spacing: 2.8px;
-}
-QLabel#HeroTitle {
-    color: #ffffff;
-    font-size: 44px;
-    font-weight: 950;
-    letter-spacing: -1.2px;
-}
-QLabel#HeroSubtitle {
-    color: #d9e7f7;
-    font-size: 15px;
-    font-weight: 500;
-}
+QLabel#Brand { color: #ffffff; font-size: 18px; font-weight: 950; }
+QLabel#PanelTitle { color: #ffffff; font-size: 16px; font-weight: 900; }
+QLabel#PanelHint { color: #a8bad1; font-size: 9px; font-weight: 700; }
+QLabel#HeroEyebrow { color: #8bc7ff; font-size: 10px; font-weight: 950; letter-spacing: 2.8px; }
+QLabel#HeroTitle { color: #ffffff; font-size: 44px; font-weight: 950; letter-spacing: -1.2px; }
+QLabel#HeroSubtitle { color: #d9e7f7; font-size: 15px; font-weight: 500; }
 QLabel#SignalPill {
     color: #dbeafe;
     background-color: #0b2443;
@@ -117,32 +95,9 @@ QLabel#SignalPill {
     font-weight: 900;
     letter-spacing: 0.7px;
 }
-QLabel#PanelTitle {
-    color: #ffffff;
-    font-size: 16px;
-    font-weight: 900;
-}
-QLabel#PanelHint {
-    color: #a8bad1;
-    font-size: 9px;
-    font-weight: 700;
-}
-QLabel#MetricLabel {
-    color: #aab7cc;
-    font-size: 9px;
-    font-weight: 950;
-    letter-spacing: 1.3px;
-}
-QLabel#MetricValue {
-    color: #ffffff;
-    font-size: 32px;
-    font-weight: 950;
-}
-QLabel#MetricSubtext {
-    color: #9fb0c8;
-    font-size: 9px;
-    font-weight: 700;
-}
+QLabel#MetricLabel { color: #aab7cc; font-size: 9px; font-weight: 950; letter-spacing: 1.3px; }
+QLabel#MetricValue { color: #ffffff; font-size: 32px; font-weight: 950; }
+QLabel#MetricSubtext { color: #9fb0c8; font-size: 9px; font-weight: 700; }
 QLabel#Pill {
     color: #ffffff;
     background-color: #0f2a4f;
@@ -151,6 +106,17 @@ QLabel#Pill {
     padding: 8px 13px;
     font-weight: 900;
 }
+QPushButton#NavButton {
+    background-color: transparent;
+    border: 1px solid transparent;
+    color: #bfd0e6;
+    font-size: 10px;
+    font-weight: 850;
+    padding: 8px 13px;
+    border-radius: 15px;
+}
+QPushButton#NavButton:hover { background-color: #111f34; border: 1px solid #3d5878; color: #ffffff; }
+QPushButton#NavButton:pressed { background-color: #1d4ed8; border: 1px solid #93c5fd; color: #ffffff; }
 QLineEdit, QComboBox {
     background-color: #030814;
     border: 1px solid #52647e;
@@ -159,10 +125,7 @@ QLineEdit, QComboBox {
     color: #f8fafc;
     selection-background-color: #2563eb;
 }
-QLineEdit:focus, QComboBox:focus {
-    border: 1px solid #93c5fd;
-    background-color: #0b1728;
-}
+QLineEdit:focus, QComboBox:focus { border: 1px solid #93c5fd; background-color: #0b1728; }
 QComboBox::drop-down { border: 0px; width: 30px; }
 QPushButton {
     background-color: #0b1728;
@@ -174,16 +137,11 @@ QPushButton {
 }
 QPushButton:hover { background-color: #17263d; border: 1px solid #6e87a8; }
 QPushButton:pressed { background-color: #050914; }
-QPushButton#HeroButton, QPushButton#PrimaryButton {
+QPushButton#PrimaryButton {
     background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2f6df6, stop:0.48 #2563eb, stop:1 #1d4ed8);
     border: 1px solid #a6d1ff;
     color: #ffffff;
-    padding: 13px 26px;
-    border-radius: 20px;
     font-weight: 950;
-}
-QPushButton#HeroButton:hover, QPushButton#PrimaryButton:hover {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #3b82f6, stop:0.50 #2563eb, stop:1 #1e40af);
 }
 QPushButton#DangerButton { background-color: #220d14; border: 1px solid #991b1b; color: #fecaca; }
 QPushButton#DangerButton:hover { background-color: #3a141c; border: 1px solid #ef4444; }
@@ -201,6 +159,7 @@ QTableWidget {
 QTableWidget::viewport { background-color: #030814; }
 QTableWidget::item { padding: 9px; border-bottom: 1px solid #172033; }
 QTableWidget::item:hover { background-color: #111f34; }
+QHeaderView { background-color: #030814; }
 QHeaderView::section {
     background-color: #101b2d;
     color: #d4e2f4;
@@ -217,7 +176,6 @@ QHeaderView::section:vertical {
     border-right: 1px solid #3c516d;
     font-weight: 950;
 }
-QHeaderView::section:hover { background-color: #1e293b; color: #ffffff; }
 QTableCornerButton::section {
     background-color: #101b2d;
     border: 0px;
@@ -251,37 +209,31 @@ QTextEdit {
     line-height: 150%;
     selection-background-color: #2563eb;
 }
-QScrollBar:vertical {
-    background-color: #111827;
-    width: 22px;
-    margin: 4px 2px 4px 2px;
-    border-radius: 10px;
-}
-QScrollBar::handle:vertical {
-    background-color: #94a3b8;
-    border: 2px solid #111827;
-    border-radius: 10px;
-    min-height: 58px;
-}
+QScrollBar:vertical { background-color: #111827; width: 22px; margin: 4px 2px 4px 2px; border-radius: 10px; }
+QScrollBar::handle:vertical { background-color: #94a3b8; border: 2px solid #111827; border-radius: 10px; min-height: 58px; }
 QScrollBar::handle:vertical:hover { background-color: #cbd5e1; }
 QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0px; background: none; border: none; }
 QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
-QScrollBar:horizontal {
-    background-color: #111827;
-    height: 22px;
-    margin: 2px 4px 2px 4px;
-    border-radius: 10px;
-}
-QScrollBar::handle:horizontal {
-    background-color: #94a3b8;
-    border: 2px solid #111827;
-    border-radius: 10px;
-    min-width: 58px;
-}
+QScrollBar:horizontal { background-color: #111827; height: 22px; margin: 2px 4px 2px 4px; border-radius: 10px; }
+QScrollBar::handle:horizontal { background-color: #94a3b8; border: 2px solid #111827; border-radius: 10px; min-width: 58px; }
 QScrollBar::handle:horizontal:hover { background-color: #cbd5e1; }
 QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0px; background: none; border: none; }
 QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }
 """
+
+FLAG_COLUMNS = {
+    "Overall Flag", "Deep Dive Action", "Valuation Flag", "Quality Flag", "Balance Sheet Flag",
+    "Dilution Flag", "Data Confidence Flag", "Overall Peer Flag", "Relative Valuation Flag",
+    "Relative Quality Flag", "Relative Balance Flag", "Readiness",
+}
+DEFAULT_SEC_USER_AGENT = ""
+DEFAULT_PEER_GROUPS = [
+    "", "AI Hardware / Semiconductors", "Semiconductor Manufacturing", "Semiconductor Equipment",
+    "Semiconductor IP", "AI Infrastructure / Servers", "SMR / Nuclear", "Uranium / Nuclear Fuel",
+    "Grid / Electrification", "Robotics / Automation", "Defense Tech", "Space / Satellites",
+    "Quantum Computing", "Cybersecurity", "Cloud / AI Software", "Battery / Energy Storage",
+    "Advanced Manufacturing", "Other / Custom",
+]
 
 
 def apply_windows_dark_title_bar(window: QMainWindow) -> None:
@@ -322,14 +274,17 @@ def polish_table(table: QTableWidget, sticky_ticker: bool = False) -> None:
     table.setAlternatingRowColors(True)
     table.setShowGrid(False)
     table.setWordWrap(False)
+    table.setMouseTracking(True)
+    table.setSortingEnabled(True)
+    table.horizontalHeader().setStretchLastSection(True)
     table.verticalHeader().setVisible(sticky_ticker)
     if sticky_ticker:
         table.verticalHeader().setFixedWidth(74)
         table.verticalHeader().setDefaultAlignment(Qt.AlignCenter)
-        table.setColumnHidden(0, True)
-    table.horizontalHeader().setStretchLastSection(True)
-    table.setSortingEnabled(True)
-    table.setMouseTracking(True)
+        table.verticalHeader().setStyleSheet(
+            "QHeaderView { background-color: #030814; }"
+            "QHeaderView::section { background-color: #0b1728; color: #ffffff; border-right: 1px solid #3c516d; border-bottom: 1px solid #26384f; font-weight: 950; }"
+        )
     table.setColumnWidth(0, 92)
 
 
@@ -355,23 +310,6 @@ def make_metric_card(label: str, value: str, subtext: str) -> tuple[QWidget, QLa
     layout.addWidget(value_widget)
     layout.addWidget(subtext_widget)
     return card, value_widget, subtext_widget
-
-
-FLAG_COLUMNS = {
-    "Overall Flag", "Deep Dive Action", "Valuation Flag", "Quality Flag", "Balance Sheet Flag",
-    "Dilution Flag", "Data Confidence Flag", "Overall Peer Flag", "Relative Valuation Flag",
-    "Relative Quality Flag", "Relative Balance Flag", "Readiness",
-}
-
-DEFAULT_SEC_USER_AGENT = ""
-
-DEFAULT_PEER_GROUPS = [
-    "", "AI Hardware / Semiconductors", "Semiconductor Manufacturing", "Semiconductor Equipment",
-    "Semiconductor IP", "AI Infrastructure / Servers", "SMR / Nuclear", "Uranium / Nuclear Fuel",
-    "Grid / Electrification", "Robotics / Automation", "Defense Tech", "Space / Satellites",
-    "Quantum Computing", "Cybersecurity", "Cloud / AI Software", "Battery / Energy Storage",
-    "Advanced Manufacturing", "Other / Custom",
-]
 
 
 class MainWindow(QMainWindow):
@@ -416,6 +354,25 @@ class MainWindow(QMainWindow):
         splitter = QSplitter(Qt.Horizontal)
         splitter.setChildrenCollapsible(False)
 
+        left = self.build_left_panel()
+        self.center_tabs = QTabWidget()
+        self.center_tabs.setObjectName("WorkspaceTabs")
+        self.build_overview_tab(self.center_tabs)
+        self.build_data_tabs(self.center_tabs)
+        right = self.build_right_panel()
+
+        splitter.addWidget(left)
+        splitter.addWidget(self.center_tabs)
+        splitter.addWidget(right)
+        splitter.setSizes([390, 1040, 330])
+        main_layout.addWidget(splitter)
+        root_layout.addWidget(main)
+        self.setCentralWidget(root)
+
+        self.selected_ticker = None
+        self.refresh_all_tables()
+
+    def build_left_panel(self) -> QWidget:
         left = QWidget()
         left.setObjectName("ControlPanel")
         left_layout = QVBoxLayout(left)
@@ -432,7 +389,7 @@ class MainWindow(QMainWindow):
         self.watchlist_table.setColumnCount(3)
         self.watchlist_table.setHorizontalHeaderLabels(["Ticker", "Company", "Peer Group"])
         self.watchlist_table.cellClicked.connect(self.watchlist_clicked)
-        polish_table(self.watchlist_table)
+        polish_table(self.watchlist_table, sticky_ticker=False)
         left_layout.addWidget(self.watchlist_table, 3)
 
         form_group = QWidget()
@@ -486,12 +443,9 @@ class MainWindow(QMainWindow):
             button.clicked.connect(fn)
             action_layout.addWidget(button)
         left_layout.addWidget(action_group, 2)
+        return left
 
-        self.center_tabs = QTabWidget()
-        self.center_tabs.setObjectName("WorkspaceTabs")
-        self.build_overview_tab(self.center_tabs)
-        self.build_data_tabs(self.center_tabs)
-
+    def build_right_panel(self) -> QWidget:
         right = QWidget()
         right.setObjectName("DecisionPanel")
         right_layout = QVBoxLayout(right)
@@ -515,17 +469,7 @@ class MainWindow(QMainWindow):
             "The Overview tab ranks names by score and highlights candidates for deeper research."
         )
         right_layout.addWidget(self.details)
-
-        splitter.addWidget(left)
-        splitter.addWidget(self.center_tabs)
-        splitter.addWidget(right)
-        splitter.setSizes([390, 1040, 330])
-        main_layout.addWidget(splitter)
-        root_layout.addWidget(main)
-        self.setCentralWidget(root)
-
-        self.selected_ticker = None
-        self.refresh_all_tables()
+        return right
 
     def navigate_top_nav(self, tab_index: int) -> None:
         if tab_index == -1:
@@ -545,7 +489,6 @@ class MainWindow(QMainWindow):
         hero_layout = QVBoxLayout(hero)
         hero_layout.setContentsMargins(38, 34, 38, 34)
         hero_layout.setSpacing(18)
-
         eyebrow = QLabel("SCREEN. RANK. RESEARCH. REPEAT.")
         eyebrow.setObjectName("HeroEyebrow")
         eyebrow.setAlignment(Qt.AlignCenter)
@@ -553,9 +496,7 @@ class MainWindow(QMainWindow):
         title.setObjectName("HeroTitle")
         title.setAlignment(Qt.AlignCenter)
         title.setWordWrap(True)
-        subtitle = QLabel(
-            "Run SEC + Finnhub data through a local scoring model to rank quality, valuation, balance sheet strength, dilution risk, and data confidence."
-        )
+        subtitle = QLabel("Run SEC + Finnhub data through a local scoring model to rank quality, valuation, balance sheet strength, dilution risk, and data confidence.")
         subtitle.setObjectName("HeroSubtitle")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setWordWrap(True)
@@ -567,19 +508,10 @@ class MainWindow(QMainWindow):
             signal.setObjectName("SignalPill")
             signal_row.addWidget(signal)
         signal_row.addStretch()
-        hero_button_row = QHBoxLayout()
-        hero_button_row.addStretch()
-        hero_button = QPushButton("Run Full Pipeline")
-        hero_button.setObjectName("HeroButton")
-        hero_button.setCursor(Qt.PointingHandCursor)
-        hero_button.clicked.connect(self.run_pipeline_clicked)
-        hero_button_row.addWidget(hero_button)
-        hero_button_row.addStretch()
         hero_layout.addWidget(eyebrow)
         hero_layout.addWidget(title)
         hero_layout.addWidget(subtitle)
         hero_layout.addLayout(signal_row)
-        hero_layout.addLayout(hero_button_row)
 
         metric_grid = QGridLayout()
         metric_grid.setSpacing(14)
@@ -612,27 +544,14 @@ class MainWindow(QMainWindow):
         tabs.addTab(overview, "Overview")
 
     def build_data_tabs(self, tabs: QTabWidget) -> None:
-        self.master_columns = [
-            "Ticker", "Final Rank", "Score", "Quality Score", "Valuation Score", "Balance Score", "Dilution Score",
-            "FCF Score", "Data Score", "Overall Flag", "Deep Dive Action", "Valuation Flag", "Quality Flag",
-            "Balance Sheet Flag", "Dilution Flag", "Data Confidence Flag", "Company", "Peer Group", "Price",
-            "Market Cap", "EV", "Revenue", "FCF", "Cash", "Debt", "Current Ratio", "Shares Out",
-            "Diluted Shares", "Dilution 1Y", "Dilution 3Y", "EV/Revenue", "EV/FCF", "P/S", "P/E",
-            "Beta", "52W High", "52W Low", "Cash Runway", "Readiness", "Next Action", "Missing / Weak Areas", "Source Status"
-        ]
+        self.master_columns = ["Ticker", "Final Rank", "Score", "Quality Score", "Valuation Score", "Balance Score", "Dilution Score", "FCF Score", "Data Score", "Overall Flag", "Deep Dive Action", "Valuation Flag", "Quality Flag", "Balance Sheet Flag", "Dilution Flag", "Data Confidence Flag", "Company", "Peer Group", "Price", "Market Cap", "EV", "Revenue", "FCF", "Cash", "Debt", "Current Ratio", "Shares Out", "Diluted Shares", "Dilution 1Y", "Dilution 3Y", "EV/Revenue", "EV/FCF", "P/S", "P/E", "Beta", "52W High", "52W Low", "Cash Runway", "Readiness", "Next Action", "Missing / Weak Areas", "Source Status"]
         self.master_table = QTableWidget()
         self.master_table.setColumnCount(len(self.master_columns))
         self.master_table.setHorizontalHeaderLabels(self.master_columns)
         polish_table(self.master_table, sticky_ticker=True)
         tabs.addTab(self.master_table, "Master Watchlist")
 
-        self.peer_columns = [
-            "Ticker", "Peer Group", "Peer Count", "Overall Peer Flag", "Relative Valuation Flag", "Relative Quality Flag",
-            "Relative Balance Flag", "EV/Revenue", "Peer Median EV/Revenue", "EV/FCF", "Peer Median EV/FCF",
-            "P/S", "Peer Median P/S", "FCF Margin", "Peer Median FCF Margin", "Operating Margin",
-            "Peer Median Operating Margin", "Gross Margin", "Peer Median Gross Margin", "Current Ratio",
-            "Peer Median Current Ratio", "Readiness", "Missing / Weak Areas"
-        ]
+        self.peer_columns = ["Ticker", "Peer Group", "Peer Count", "Overall Peer Flag", "Relative Valuation Flag", "Relative Quality Flag", "Relative Balance Flag", "EV/Revenue", "Peer Median EV/Revenue", "EV/FCF", "Peer Median EV/FCF", "P/S", "Peer Median P/S", "FCF Margin", "Peer Median FCF Margin", "Operating Margin", "Peer Median Operating Margin", "Gross Margin", "Peer Median Gross Margin", "Current Ratio", "Peer Median Current Ratio", "Readiness", "Missing / Weak Areas"]
         self.peer_table = QTableWidget()
         self.peer_table.setColumnCount(len(self.peer_columns))
         self.peer_table.setHorizontalHeaderLabels(self.peer_columns)
@@ -656,27 +575,17 @@ class MainWindow(QMainWindow):
         self.cache_table.setColumnCount(10)
         self.cache_table.setHorizontalHeaderLabels(["Ticker", "Source", "Endpoint", "Field", "Value", "FY", "Status", "Concept", "Unit", "Filed"])
         polish_table(self.cache_table, sticky_ticker=True)
+        cache_layout.addWidget(self.cache_table)
         tabs.addTab(cache_panel, "API Cache")
 
-        self.market_columns = [
-            "ticker", "company", "peer_group", "price_per_share", "market_cap_raw", "enterprise_value_raw",
-            "shares_out_raw", "diluted_shares_raw", "high_52w", "low_52w", "beta", "avg_volume_shares",
-            "pe_ratio", "eps_market", "revenue_raw", "gross_profit_raw", "operating_income_raw", "ebitda_raw",
-            "net_income_raw", "eps_diluted", "operating_cash_flow_raw", "capex_raw", "fcf_raw", "cash_raw",
-            "debt_raw", "net_debt_raw", "current_ratio", "equity_raw", "sbc_raw", "rd_raw", "sga_raw",
-            "dilution_1y", "dilution_3y", "source_status"
-        ]
+        self.market_columns = ["ticker", "company", "peer_group", "price_per_share", "market_cap_raw", "enterprise_value_raw", "shares_out_raw", "diluted_shares_raw", "high_52w", "low_52w", "beta", "avg_volume_shares", "pe_ratio", "eps_market", "revenue_raw", "gross_profit_raw", "operating_income_raw", "ebitda_raw", "net_income_raw", "eps_diluted", "operating_cash_flow_raw", "capex_raw", "fcf_raw", "cash_raw", "debt_raw", "net_debt_raw", "current_ratio", "equity_raw", "sbc_raw", "rd_raw", "sga_raw", "dilution_1y", "dilution_3y", "source_status"]
         self.market_table = QTableWidget()
         self.market_table.setColumnCount(len(self.market_columns))
         self.market_table.setHorizontalHeaderLabels(self.market_columns)
         polish_table(self.market_table, sticky_ticker=True)
         tabs.addTab(self.market_table, "Market Data")
 
-        self.readiness_columns = [
-            "ticker", "company", "peer_group", "price_ok", "market_cap_ok", "shares_ok", "revenue_ok",
-            "gross_profit_ok", "ebitda_ok", "fcf_ok", "cash_ok", "debt_ok", "liquidity_ok", "dilution_ok",
-            "sbc_rd_sga_ok", "core_data_score", "readiness", "next_action", "missing_weak_areas"
-        ]
+        self.readiness_columns = ["ticker", "company", "peer_group", "price_ok", "market_cap_ok", "shares_ok", "revenue_ok", "gross_profit_ok", "ebitda_ok", "fcf_ok", "cash_ok", "debt_ok", "liquidity_ok", "dilution_ok", "sbc_rd_sga_ok", "core_data_score", "readiness", "next_action", "missing_weak_areas"]
         self.readiness_table = QTableWidget()
         self.readiness_table.setColumnCount(len(self.readiness_columns))
         self.readiness_table.setHorizontalHeaderLabels(self.readiness_columns)
@@ -716,28 +625,13 @@ class MainWindow(QMainWindow):
         if not ticker:
             QMessageBox.warning(self, "No ticker selected", "Select a ticker from the watchlist first.")
             return
-        result = QMessageBox.question(
-            self, "Delete ticker", f"Delete {ticker} from the watchlist and remove its cached local data?",
-            QMessageBox.Yes | QMessageBox.No, QMessageBox.No,
-        )
+        result = QMessageBox.question(self, "Delete ticker", f"Delete {ticker} from the watchlist and remove its cached local data?", QMessageBox.Yes | QMessageBox.No, QMessageBox.No)
         if result != QMessageBox.Yes:
             return
         delete_ticker(ticker, delete_cached_data=True)
         self.selected_ticker = None
         self.details.setText(f"Deleted {ticker} from the local watchlist and local cached data.")
         self.refresh_all_tables()
-
-    def refresh_watchlist(self) -> None:
-        rows = list_tickers()
-        self.watchlist_table.setSortingEnabled(False)
-        self.watchlist_table.setRowCount(len(rows))
-        for r, row in enumerate(rows):
-            ticker = row["ticker"]
-            values = [ticker, row["company"] or "", row["peer_group"] or row["category"] or ""]
-            for c, val in enumerate(values):
-                self.watchlist_table.setItem(r, c, QTableWidgetItem(str(val)))
-        self.watchlist_table.setSortingEnabled(True)
-        self.watchlist_table.resizeColumnsToContents()
 
     def watchlist_clicked(self, row: int, col: int) -> None:
         item = self.watchlist_table.item(row, 0)
@@ -822,6 +716,17 @@ class MainWindow(QMainWindow):
         except Exception as exc:
             QMessageBox.critical(self, "Pipeline failed", str(exc))
             self.details.setText(f"{ticker}\n\nPipeline failed:\n{exc}")
+
+    def refresh_watchlist(self) -> None:
+        rows = list_tickers()
+        self.watchlist_table.setSortingEnabled(False)
+        self.watchlist_table.setRowCount(len(rows))
+        for r, row in enumerate(rows):
+            values = [row["ticker"], row["company"] or "", row["peer_group"] or row["category"] or ""]
+            for c, val in enumerate(values):
+                self.watchlist_table.setItem(r, c, QTableWidgetItem(str(val)))
+        self.watchlist_table.setSortingEnabled(True)
+        self.watchlist_table.resizeColumnsToContents()
 
     def refresh_cache_table(self, ticker=None) -> None:
         rows = list_api_cache(ticker=ticker, limit=500)
@@ -946,16 +851,7 @@ class MainWindow(QMainWindow):
                 lines.append(f"   {r.get('Overall Flag', '')}")
         else:
             lines.append("- None yet. Add/select a ticker and run the pipeline.")
-
-        lines.extend([
-            "", "Decision Buckets",
-            f"Deep-dive candidates: {tickers_matching('GREEN')}",
-            f"Speculative catalyst names: {tickers_matching('PURPLE')}",
-            f"Watchlist names: {tickers_matching('YELLOW')}",
-            f"Skip/problem names: {tickers_matching('RED')}",
-            f"Insufficient-data names: {tickers_matching('GRAY')}",
-            "", "Needs Better Data",
-        ])
+        lines.extend(["", "Decision Buckets", f"Deep-dive candidates: {tickers_matching('GREEN')}", f"Speculative catalyst names: {tickers_matching('PURPLE')}", f"Watchlist names: {tickers_matching('YELLOW')}", f"Skip/problem names: {tickers_matching('RED')}", f"Insufficient-data names: {tickers_matching('GRAY')}", "", "Needs Better Data"])
         lines.extend([f"- {r['Ticker']}  ·  Score {r.get('Score', '')}  ·  {r.get('Missing / Weak Areas', '')}" for r in need_data[:15]] or ["- None"])
         lines.extend(["", "High Quality but Expensive"])
         lines.extend([f"- {r['Ticker']}  ·  Score {r.get('Score', '')}  ·  Quality: {r.get('Quality Flag', '')}  ·  Valuation: {r.get('Valuation Flag', '')}" for r in high_quality_expensive[:10]] or ["- None"])
