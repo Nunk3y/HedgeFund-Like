@@ -229,6 +229,18 @@ def fact_sort_key(fact: dict) -> Tuple[int, str, str, int]:
     return form_bonus, filed, end, fy
 
 
+def fact_fiscal_year(fact: dict) -> int:
+    try:
+        fy = int(fact.get("fy") or 0)
+    except Exception:
+        fy = 0
+    if fy <= 0:
+        end = str(fact.get("end") or "")
+        if len(end) >= 4 and end[:4].isdigit():
+            fy = int(end[:4])
+    return fy
+
+
 def make_fact(field: str, concept: str, unit: str, raw: dict) -> SecFact:
     return SecFact(field, concept, unit, raw.get("val"), raw.get("fy"), raw.get("fp"), raw.get("form"), raw.get("filed"), raw.get("start"), raw.get("end"), raw.get("accn"), raw.get("frame"))
 
@@ -269,14 +281,7 @@ def annual_history_for_field(companyfacts: dict, field: str, max_years: int = 5)
         for raw in units.get(unit, []):
             if "val" not in raw or not is_annual_fact(raw):
                 continue
-            try:
-                fy = int(raw.get("fy") or 0)
-            except Exception:
-                fy = 0
-            if fy <= 0:
-                end = str(raw.get("end") or "")
-                if len(end) >= 4 and end[:4].isdigit():
-                    fy = int(end[:4])
+            fy = fact_fiscal_year(raw)
             if fy <= 0:
                 continue
             fact = make_fact(field, concept, unit, raw)
@@ -287,8 +292,6 @@ def annual_history_for_field(companyfacts: dict, field: str, max_years: int = 5)
                 existing_raw = {"form": existing.form, "filed": existing.filed, "end": existing.end, "fy": existing.fy}
                 if fact_sort_key(raw) > fact_sort_key(existing_raw):
                     by_year[fy] = fact
-        if by_year:
-            break
     return [by_year[y] for y in sorted(by_year.keys(), reverse=True)[:max_years]]
 
 
@@ -340,8 +343,13 @@ def refresh_sec_rows(ticker: str, user_agent: str, years: int = 5) -> list[dict]
                 rows.append(row(ticker, cik, "companyfacts_annual_history", f"{field}_history", fact))
 
     shares_hist = annual_history_for_field(companyfacts, "shares_diluted", years)
-    if len(shares_hist) < 2:
-        shares_hist = annual_history_for_field(companyfacts, "shares_basic", years)
+    if len(shares_hist) < 4:
+        basic_hist = annual_history_for_field(companyfacts, "shares_basic", years)
+        by_year = {int(f.fy): f for f in shares_hist if f.fy is not None}
+        for fact in basic_hist:
+            if fact.fy is not None:
+                by_year.setdefault(int(fact.fy), fact)
+        shares_hist = [by_year[y] for y in sorted(by_year.keys(), reverse=True)[:years]]
 
     if shares_hist:
         latest = shares_hist[0]
