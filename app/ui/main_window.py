@@ -4,7 +4,7 @@ from PySide6.QtGui import QColor
 from PySide6.QtWidgets import (
     QApplication, QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, QLabel, QLineEdit,
     QPushButton, QTableWidget, QTableWidgetItem, QMessageBox, QSplitter, QTextEdit,
-    QTabWidget, QFormLayout, QComboBox
+    QTabWidget, QFormLayout, QComboBox, QGridLayout
 )
 
 from app.db.database import (
@@ -21,31 +21,43 @@ from app.services.peer_service import list_peer_comparison
 
 DARK_STYLE = """
 QMainWindow {
-    background-color: #070a0f;
+    background-color: #05070b;
 }
 
 QWidget#AppRoot {
-    background-color: #070a0f;
+    background-color: qradialgradient(cx:0.18, cy:0.08, radius:1.25, stop:0 #132033, stop:0.42 #070b12, stop:1 #040507);
     color: #e5e7eb;
     font-family: Segoe UI, Inter, Arial;
     font-size: 10pt;
 }
 
 QWidget#TopBar {
-    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #0d1422, stop:1 #101827);
-    border: 1px solid #1f2937;
-    border-radius: 18px;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #111827, stop:0.45 #0b1120, stop:1 #11151f);
+    border: 1px solid #243044;
+    border-radius: 24px;
 }
 
-QWidget#Sidebar, QWidget#InsightPanel, QWidget#CachePanel {
-    background-color: #0d111b;
+QWidget#Sidebar, QWidget#InsightPanel, QWidget#CachePanel, QWidget#DashboardHero {
+    background-color: rgba(10, 15, 24, 235);
+    border: 1px solid #233044;
+    border-radius: 24px;
+}
+
+QWidget#MetricCard {
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:1, stop:0 #101827, stop:1 #0b1019);
+    border: 1px solid #28364d;
+    border-radius: 20px;
+}
+
+QWidget#ActionGroup {
+    background-color: #090d14;
     border: 1px solid #1f2937;
     border-radius: 18px;
 }
 
 QSplitter::handle {
-    background-color: #070a0f;
-    width: 10px;
+    background-color: transparent;
+    width: 12px;
 }
 
 QLabel {
@@ -54,158 +66,208 @@ QLabel {
 
 QLabel#AppTitle {
     color: #f8fafc;
-    font-size: 26px;
-    font-weight: 800;
-    letter-spacing: 0.3px;
+    font-size: 31px;
+    font-weight: 850;
+    letter-spacing: 0.5px;
 }
 
 QLabel#AppSubtitle {
     color: #94a3b8;
     font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.2px;
+}
+
+QLabel#Eyebrow {
+    color: #7dd3fc;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.8px;
+}
+
+QLabel#HeroTitle {
+    color: #f8fafc;
+    font-size: 28px;
+    font-weight: 850;
+}
+
+QLabel#HeroSubtitle {
+    color: #94a3b8;
+    font-size: 12px;
     font-weight: 500;
 }
 
 QLabel#SectionTitle {
     color: #f8fafc;
-    font-size: 14px;
-    font-weight: 750;
+    font-size: 15px;
+    font-weight: 800;
 }
 
 QLabel#SectionHint {
+    color: #667085;
+    font-size: 9px;
+    font-weight: 600;
+}
+
+QLabel#MetricLabel {
+    color: #8fa0b8;
+    font-size: 9px;
+    font-weight: 800;
+    letter-spacing: 1.1px;
+}
+
+QLabel#MetricValue {
+    color: #f8fafc;
+    font-size: 28px;
+    font-weight: 850;
+}
+
+QLabel#MetricSubtext {
     color: #64748b;
     font-size: 9px;
+    font-weight: 600;
+}
+
+QLabel#PremiumBadge {
+    color: #fde68a;
+    background-color: #2a2110;
+    border: 1px solid #8a6f2a;
+    border-radius: 15px;
+    padding: 8px 13px;
+    font-weight: 850;
+    letter-spacing: 0.6px;
 }
 
 QLineEdit, QComboBox {
-    background-color: #111827;
-    border: 1px solid #263244;
-    padding: 8px 10px;
-    border-radius: 10px;
+    background-color: #0d1320;
+    border: 1px solid #263349;
+    padding: 10px 12px;
+    border-radius: 13px;
     color: #f8fafc;
     selection-background-color: #2563eb;
 }
 
 QLineEdit:focus, QComboBox:focus {
-    border: 1px solid #3b82f6;
-    background-color: #0f172a;
+    border: 1px solid #60a5fa;
+    background-color: #111827;
 }
 
 QComboBox::drop-down {
     border: 0px;
-    width: 26px;
+    width: 28px;
 }
 
 QPushButton {
-    background-color: #182235;
+    background-color: #121a28;
     color: #e5e7eb;
-    border: 1px solid #2b3a52;
-    padding: 9px 12px;
-    border-radius: 11px;
-    font-weight: 650;
+    border: 1px solid #2a3952;
+    padding: 10px 13px;
+    border-radius: 13px;
+    font-weight: 750;
 }
 
 QPushButton:hover {
-    background-color: #22314a;
-    border: 1px solid #3b4e6c;
+    background-color: #1b2638;
+    border: 1px solid #40536f;
 }
 
 QPushButton:pressed {
-    background-color: #111827;
+    background-color: #0b1019;
 }
 
 QPushButton#PrimaryButton {
-    background-color: #2563eb;
-    border: 1px solid #3b82f6;
-    color: white;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #2563eb, stop:1 #7c3aed);
+    border: 1px solid #60a5fa;
+    color: #ffffff;
 }
 
 QPushButton#PrimaryButton:hover {
-    background-color: #1d4ed8;
+    background-color: qlineargradient(x1:0, y1:0, x2:1, y2:0, stop:0 #1d4ed8, stop:1 #6d28d9);
 }
 
 QPushButton#DangerButton {
-    background-color: #2a1116;
+    background-color: #261016;
     border: 1px solid #7f1d1d;
     color: #fecaca;
 }
 
 QPushButton#DangerButton:hover {
-    background-color: #3f151c;
+    background-color: #3a141c;
     border: 1px solid #991b1b;
 }
 
 QPushButton#QuietButton {
-    background-color: #111827;
-    border: 1px solid #263244;
+    background-color: #0d1320;
+    border: 1px solid #263349;
     color: #cbd5e1;
 }
 
 QTableWidget {
-    background-color: #0b0f17;
-    alternate-background-color: #0f1520;
+    background-color: #080c13;
+    alternate-background-color: #0d1320;
     color: #dbe4ef;
-    gridline-color: #182235;
-    border: 1px solid #1f2937;
-    border-radius: 14px;
+    gridline-color: #111827;
+    border: 1px solid #223047;
+    border-radius: 18px;
     selection-background-color: #1d4ed8;
     selection-color: #ffffff;
 }
 
 QTableWidget::item {
-    padding: 6px;
+    padding: 8px;
     border-bottom: 1px solid #111827;
 }
 
 QHeaderView::section {
-    background-color: #111827;
-    color: #94a3b8;
-    padding: 8px 9px;
+    background-color: #101827;
+    color: #9aa8bd;
+    padding: 10px 9px;
     border: 0px;
-    border-bottom: 1px solid #263244;
-    font-weight: 700;
+    border-bottom: 1px solid #2b3a52;
+    font-weight: 800;
 }
 
 QTabWidget::pane {
-    border: 1px solid #1f2937;
-    border-radius: 16px;
-    background-color: #0b0f17;
+    border: 1px solid #223047;
+    border-radius: 22px;
+    background-color: #070b12;
     top: -1px;
 }
 
 QTabBar::tab {
-    background-color: #0d111b;
-    color: #94a3b8;
-    padding: 10px 16px;
-    margin-right: 6px;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    background-color: #0a0f18;
+    color: #8fa0b8;
+    padding: 12px 18px;
+    margin-right: 7px;
+    border-top-left-radius: 14px;
+    border-top-right-radius: 14px;
     border: 1px solid #1f2937;
-    font-weight: 650;
+    font-weight: 800;
 }
 
 QTabBar::tab:selected {
-    background-color: #172033;
+    background-color: #111827;
     color: #f8fafc;
-    border-bottom: 1px solid #172033;
+    border-bottom: 1px solid #111827;
 }
 
 QTabBar::tab:hover:!selected {
-    background-color: #111827;
+    background-color: #0f172a;
     color: #cbd5e1;
 }
 
 QTextEdit {
-    background-color: #0b0f17;
-    border: 1px solid #1f2937;
-    border-radius: 14px;
+    background-color: #080c13;
+    border: 1px solid #223047;
+    border-radius: 18px;
     color: #dbe4ef;
-    padding: 10px;
-    line-height: 145%;
+    padding: 13px;
+    line-height: 150%;
     selection-background-color: #2563eb;
 }
 
 QScrollBar:vertical, QScrollBar:horizontal {
-    background-color: #0b0f17;
+    background-color: #080c13;
     border: 0px;
     width: 11px;
     height: 11px;
@@ -214,12 +276,12 @@ QScrollBar:vertical, QScrollBar:horizontal {
 QScrollBar::handle:vertical, QScrollBar::handle:horizontal {
     background-color: #334155;
     border-radius: 5px;
-    min-height: 30px;
-    min-width: 30px;
+    min-height: 32px;
+    min-width: 32px;
 }
 
 QScrollBar::handle:vertical:hover, QScrollBar::handle:horizontal:hover {
-    background-color: #475569;
+    background-color: #64748b;
 }
 
 QScrollBar::add-line, QScrollBar::sub-line {
@@ -240,15 +302,15 @@ def fmt(value):
 def flag_colors(text: str):
     text = text or ""
     if text.startswith("GREEN"):
-        return QColor("#0f3d24"), QColor("#86efac")
+        return QColor("#0d3a24"), QColor("#8ff0b2")
     if text.startswith("YELLOW"):
-        return QColor("#423309"), QColor("#fde68a")
+        return QColor("#40320b"), QColor("#fde68a")
     if text.startswith("RED"):
-        return QColor("#43171b"), QColor("#fca5a5")
+        return QColor("#40161b"), QColor("#fca5a5")
     if text.startswith("GRAY"):
         return QColor("#1f2937"), QColor("#cbd5e1")
     if text.startswith("PURPLE"):
-        return QColor("#321a55"), QColor("#d8b4fe")
+        return QColor("#311b52"), QColor("#d8b4fe")
     return None, None
 
 
@@ -258,6 +320,25 @@ def polish_table(table: QTableWidget) -> None:
     table.setWordWrap(False)
     table.verticalHeader().setVisible(False)
     table.horizontalHeader().setStretchLastSection(True)
+    table.setSortingEnabled(True)
+
+
+def make_metric_card(label: str, value: str, subtext: str) -> tuple[QWidget, QLabel, QLabel]:
+    card = QWidget()
+    card.setObjectName("MetricCard")
+    layout = QVBoxLayout(card)
+    layout.setContentsMargins(16, 14, 16, 14)
+    layout.setSpacing(4)
+    label_widget = QLabel(label.upper())
+    label_widget.setObjectName("MetricLabel")
+    value_widget = QLabel(value)
+    value_widget.setObjectName("MetricValue")
+    subtext_widget = QLabel(subtext)
+    subtext_widget.setObjectName("MetricSubtext")
+    layout.addWidget(label_widget)
+    layout.addWidget(value_widget)
+    layout.addWidget(subtext_widget)
+    return card, value_widget, subtext_widget
 
 
 FLAG_COLUMNS = {
@@ -304,29 +385,32 @@ class MainWindow(QMainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.setWindowTitle("HedgeFund-Like")
-        self.resize(1680, 980)
+        self.resize(1760, 1020)
         self.setStyleSheet(DARK_STYLE)
 
         root = QWidget()
         root.setObjectName("AppRoot")
         root_layout = QVBoxLayout(root)
-        root_layout.setContentsMargins(14, 14, 14, 14)
-        root_layout.setSpacing(12)
+        root_layout.setContentsMargins(18, 18, 18, 18)
+        root_layout.setSpacing(14)
 
         top_bar = QWidget()
         top_bar.setObjectName("TopBar")
         top = QHBoxLayout(top_bar)
-        top.setContentsMargins(18, 14, 18, 14)
+        top.setContentsMargins(22, 16, 22, 16)
         title_block = QVBoxLayout()
-        title_block.setSpacing(2)
+        title_block.setSpacing(3)
+        eyebrow = QLabel("PRIVATE RESEARCH TERMINAL")
+        eyebrow.setObjectName("Eyebrow")
         title = QLabel("HedgeFund-Like")
         title.setObjectName("AppTitle")
-        subtitle = QLabel("Private stock research terminal · watchlist scoring · peer comparison · data quality checks")
+        subtitle = QLabel("Decision-grade watchlist scoring, peer comparison, and data-quality review for high-conviction technology names")
         subtitle.setObjectName("AppSubtitle")
+        title_block.addWidget(eyebrow)
         title_block.addWidget(title)
         title_block.addWidget(subtitle)
-        status_badge = QLabel("LOCAL-FIRST  ·  SEC + FINNHUB")
-        status_badge.setStyleSheet("color: #bfdbfe; background-color: #102447; border: 1px solid #1d4ed8; border-radius: 12px; padding: 7px 12px; font-weight: 700;")
+        status_badge = QLabel("PRO WORKSPACE  ·  LOCAL-FIRST  ·  SEC + FINNHUB")
+        status_badge.setObjectName("PremiumBadge")
         top.addLayout(title_block)
         top.addStretch()
         top.addWidget(status_badge)
@@ -337,11 +421,11 @@ class MainWindow(QMainWindow):
         left = QWidget()
         left.setObjectName("Sidebar")
         left_layout = QVBoxLayout(left)
-        left_layout.setContentsMargins(14, 14, 14, 14)
-        left_layout.setSpacing(10)
-        left_label = QLabel("Watchlist")
+        left_layout.setContentsMargins(16, 16, 16, 16)
+        left_layout.setSpacing(12)
+        left_label = QLabel("Watchlist Control")
         left_label.setObjectName("SectionTitle")
-        left_hint = QLabel("Select a ticker, update its peer group, then refresh data.")
+        left_hint = QLabel("Build the universe. Run the pipeline. Let the dashboard force a decision.")
         left_hint.setObjectName("SectionHint")
         left_layout.addWidget(left_label)
         left_layout.addWidget(left_hint)
@@ -350,8 +434,16 @@ class MainWindow(QMainWindow):
         self.watchlist_table.setHorizontalHeaderLabels(["Ticker", "Company", "Peer Group"])
         self.watchlist_table.cellClicked.connect(self.watchlist_clicked)
         polish_table(self.watchlist_table)
-        left_layout.addWidget(self.watchlist_table)
+        left_layout.addWidget(self.watchlist_table, 3)
 
+        form_group = QWidget()
+        form_group.setObjectName("ActionGroup")
+        form_group_layout = QVBoxLayout(form_group)
+        form_group_layout.setContentsMargins(13, 13, 13, 13)
+        form_group_layout.setSpacing(10)
+        form_title = QLabel("Ticker Setup")
+        form_title.setObjectName("SectionTitle")
+        form_group_layout.addWidget(form_title)
         form = QFormLayout()
         form.setLabelAlignment(Qt.AlignLeft)
         form.setFormAlignment(Qt.AlignTop)
@@ -371,29 +463,73 @@ class MainWindow(QMainWindow):
         form.addRow("Peer Group", self.peer_group_input)
         form.addRow("SEC User-Agent", self.sec_user_agent)
         form.addRow("Finnhub API Key", self.finnhub_api_key)
-        left_layout.addLayout(form)
+        form_group_layout.addLayout(form)
+        left_layout.addWidget(form_group, 2)
 
+        action_group = QWidget()
+        action_group.setObjectName("ActionGroup")
+        action_layout = QVBoxLayout(action_group)
+        action_layout.setContentsMargins(13, 13, 13, 13)
+        action_layout.setSpacing(9)
+        action_title = QLabel("Actions")
+        action_title.setObjectName("SectionTitle")
+        action_layout.addWidget(action_title)
         buttons = [
             ("Add / Update Ticker", self.add_ticker_clicked, "PrimaryButton"),
-            ("Delete Selected Ticker", self.delete_selected_ticker_clicked, "DangerButton"),
-            ("Save API Settings", self.save_api_settings, "QuietButton"),
+            ("Run Full Pipeline", self.run_pipeline_clicked, "PrimaryButton"),
             ("Refresh SEC Data", self.refresh_sec_clicked, "QuietButton"),
             ("Refresh Finnhub Data", self.refresh_finnhub_clicked, "QuietButton"),
-            ("Run SEC + Finnhub → Market Data → Readiness", self.run_pipeline_clicked, "PrimaryButton"),
+            ("Save API Settings", self.save_api_settings, "QuietButton"),
+            ("Delete Selected Ticker", self.delete_selected_ticker_clicked, "DangerButton"),
         ]
         for text, fn, style_name in buttons:
             b = QPushButton(text)
             b.setObjectName(style_name)
             b.setCursor(Qt.PointingHandCursor)
             b.clicked.connect(fn)
-            left_layout.addWidget(b)
+            action_layout.addWidget(b)
+        left_layout.addWidget(action_group, 2)
 
         center_tabs = QTabWidget()
         center_tabs.setObjectName("WorkspaceTabs")
 
+        dashboard = QWidget()
+        dashboard_layout = QVBoxLayout(dashboard)
+        dashboard_layout.setContentsMargins(14, 14, 14, 14)
+        dashboard_layout.setSpacing(14)
+
+        hero = QWidget()
+        hero.setObjectName("DashboardHero")
+        hero_layout = QVBoxLayout(hero)
+        hero_layout.setContentsMargins(18, 18, 18, 18)
+        hero_layout.setSpacing(12)
+        hero_eyebrow = QLabel("SCREENING COMMAND CENTER")
+        hero_eyebrow.setObjectName("Eyebrow")
+        hero_title = QLabel("Rank the watchlist. Isolate the best setups. Reject weak data.")
+        hero_title.setObjectName("HeroTitle")
+        hero_subtitle = QLabel("The dashboard summarizes model readiness, scoring, peer signals, and data gaps so each ticker has a clear next action.")
+        hero_subtitle.setObjectName("HeroSubtitle")
+        hero_layout.addWidget(hero_eyebrow)
+        hero_layout.addWidget(hero_title)
+        hero_layout.addWidget(hero_subtitle)
+
+        metric_grid = QGridLayout()
+        metric_grid.setSpacing(12)
+        card, self.metric_total, self.metric_total_sub = make_metric_card("Universe", "0", "tracked tickers")
+        metric_grid.addWidget(card, 0, 0)
+        card, self.metric_deep_dive, self.metric_deep_dive_sub = make_metric_card("Deep Dive", "0", "green candidates")
+        metric_grid.addWidget(card, 0, 1)
+        card, self.metric_watch, self.metric_watch_sub = make_metric_card("Watch", "0", "yellow names")
+        metric_grid.addWidget(card, 0, 2)
+        card, self.metric_data, self.metric_data_sub = make_metric_card("Needs Data", "0", "gray names")
+        metric_grid.addWidget(card, 0, 3)
+        hero_layout.addLayout(metric_grid)
+        dashboard_layout.addWidget(hero)
+
         self.hud = QTextEdit()
         self.hud.setReadOnly(True)
-        center_tabs.addTab(self.hud, "HUD")
+        dashboard_layout.addWidget(self.hud, 1)
+        center_tabs.addTab(dashboard, "Overview")
 
         self.master_columns = [
             "Ticker", "Final Rank", "Score", "Quality Score", "Valuation Score", "Balance Score",
@@ -431,9 +567,9 @@ class MainWindow(QMainWindow):
         cache_panel = QWidget()
         cache_panel.setObjectName("CachePanel")
         cache_layout = QVBoxLayout(cache_panel)
-        cache_layout.setContentsMargins(12, 12, 12, 12)
+        cache_layout.setContentsMargins(14, 14, 14, 14)
         cache_tools = QHBoxLayout()
-        cache_label = QLabel("API Cache Filter")
+        cache_label = QLabel("API Cache")
         cache_label.setObjectName("SectionTitle")
         cache_tools.addWidget(cache_label)
         self.cache_filter_input = QLineEdit()
@@ -474,11 +610,11 @@ class MainWindow(QMainWindow):
         right = QWidget()
         right.setObjectName("InsightPanel")
         right_layout = QVBoxLayout(right)
-        right_layout.setContentsMargins(14, 14, 14, 14)
-        right_layout.setSpacing(10)
-        right_label = QLabel("Decision Panel")
+        right_layout.setContentsMargins(16, 16, 16, 16)
+        right_layout.setSpacing(12)
+        right_label = QLabel("Decision Brief")
         right_label.setObjectName("SectionTitle")
-        right_hint = QLabel("Ticker context, pipeline results, and next-action guidance.")
+        right_hint = QLabel("Current ticker context, pipeline results, and next-action guidance.")
         right_hint.setObjectName("SectionHint")
         right_layout.addWidget(right_label)
         right_layout.addWidget(right_hint)
@@ -491,14 +627,14 @@ class MainWindow(QMainWindow):
             "2. Assign the correct peer group.\n"
             "3. Save API settings once.\n"
             "4. Run the full pipeline.\n\n"
-            "The HUD ranks names by score and highlights candidates that deserve deeper research."
+            "The Overview tab ranks names by score and highlights candidates that deserve deeper research."
         )
         right_layout.addWidget(self.details)
 
         splitter.addWidget(left)
         splitter.addWidget(center_tabs)
         splitter.addWidget(right)
-        splitter.setSizes([390, 930, 360])
+        splitter.setSizes([420, 980, 360])
         root_layout.addWidget(splitter)
         self.setCentralWidget(root)
 
@@ -663,6 +799,7 @@ class MainWindow(QMainWindow):
 
     def refresh_master_table(self) -> None:
         rows = list_master_watchlist()
+        self.master_table.setSortingEnabled(False)
         self.master_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
             for c, col in enumerate(self.master_columns):
@@ -677,10 +814,12 @@ class MainWindow(QMainWindow):
                     if bg is not None:
                         item.setBackground(bg); item.setForeground(fg)
                 self.master_table.setItem(r, c, item)
+        self.master_table.setSortingEnabled(True)
         self.master_table.resizeColumnsToContents()
 
     def refresh_peer_table(self) -> None:
         rows = list_peer_comparison()
+        self.peer_table.setSortingEnabled(False)
         self.peer_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
             for c, col in enumerate(self.peer_columns):
@@ -691,6 +830,7 @@ class MainWindow(QMainWindow):
                     if bg is not None:
                         item.setBackground(bg); item.setForeground(fg)
                 self.peer_table.setItem(r, c, item)
+        self.peer_table.setSortingEnabled(True)
         self.peer_table.resizeColumnsToContents()
 
     def refresh_hud_panel(self) -> None:
@@ -700,6 +840,9 @@ class MainWindow(QMainWindow):
         def tickers_matching(prefix: str, limit: int = 20) -> str:
             vals = [r["Ticker"] for r in rows if str(r.get("Overall Flag", "")).startswith(prefix)]
             return ", ".join(vals[:limit]) if vals else "None"
+
+        def count_matching(prefix: str) -> int:
+            return sum(1 for r in rows if str(r.get("Overall Flag", "")).startswith(prefix))
 
         def score_value(row) -> int:
             try:
@@ -723,75 +866,90 @@ class MainWindow(QMainWindow):
         strongest = [p for p in peers if str(p.get("Relative Quality Flag", "")).startswith("GREEN") or str(p.get("Relative Balance Flag", "")).startswith("GREEN")]
         warnings = [r for r in rows if str(r.get("Data Confidence Flag", "")).startswith("GRAY") or str(r.get("Overall Flag", "")).startswith("GRAY")]
 
+        total = len(rows)
+        green = count_matching("GREEN")
+        yellow = count_matching("YELLOW")
+        gray = count_matching("GRAY")
+        best = top_rows[0] if top_rows else None
+        self.metric_total.setText(str(total))
+        self.metric_total_sub.setText("tracked tickers")
+        self.metric_deep_dive.setText(str(green))
+        self.metric_deep_dive_sub.setText(f"best: {best['Ticker']}" if best else "green candidates")
+        self.metric_watch.setText(str(yellow))
+        self.metric_watch_sub.setText("yellow watchlist names")
+        self.metric_data.setText(str(gray))
+        self.metric_data_sub.setText("needs better source data")
+
         lines = [
-            "HUD — Screening Dashboard",
+            "EXECUTIVE SUMMARY",
             "",
-            "Top Opportunities by Score:",
+            "Top Opportunities by Score",
         ]
         if top_rows:
             for idx, r in enumerate(top_rows, start=1):
                 lines.append(
-                    f"{idx}. {r['Ticker']} | {r.get('Final Rank', '')} | Score {r.get('Score', '')} | "
-                    f"{r.get('Deep Dive Action', '')} | {r.get('Overall Flag', '')}"
+                    f"{idx}. {r['Ticker']}  ·  {r.get('Final Rank', '')}  ·  Score {r.get('Score', '')}  ·  "
+                    f"{r.get('Deep Dive Action', '')}"
                 )
+                lines.append(f"   {r.get('Overall Flag', '')}")
         else:
-            lines.append("- None")
+            lines.append("- None yet. Run the pipeline for at least one ticker.")
 
         lines.extend([
             "",
-            "Decision Buckets:",
-            f"Green deep-dive candidates: {tickers_matching('GREEN')}",
-            f"Purple speculative catalyst candidates: {tickers_matching('PURPLE')}",
-            f"Yellow watchlist: {tickers_matching('YELLOW')}",
-            f"Red skip/problem names: {tickers_matching('RED')}",
-            f"Gray insufficient-data names: {tickers_matching('GRAY')}",
+            "Decision Buckets",
+            f"Deep-dive candidates: {tickers_matching('GREEN')}",
+            f"Speculative catalyst names: {tickers_matching('PURPLE')}",
+            f"Watchlist names: {tickers_matching('YELLOW')}",
+            f"Skip/problem names: {tickers_matching('RED')}",
+            f"Insufficient-data names: {tickers_matching('GRAY')}",
             "",
-            "Needs Better Data:",
+            "Needs Better Data",
         ])
         if need_data:
             for r in need_data[:15]:
-                lines.append(f"- {r['Ticker']} | Score {r.get('Score', '')} | {r.get('Missing / Weak Areas', '')}")
+                lines.append(f"- {r['Ticker']}  ·  Score {r.get('Score', '')}  ·  {r.get('Missing / Weak Areas', '')}")
         else:
             lines.append("- None")
 
-        lines.extend(["", "High Quality but Expensive:"])
+        lines.extend(["", "High Quality but Expensive"])
         if high_quality_expensive:
             for r in high_quality_expensive[:10]:
                 lines.append(
-                    f"- {r['Ticker']} | Score {r.get('Score', '')} | Quality: {r.get('Quality Flag', '')} | "
+                    f"- {r['Ticker']}  ·  Score {r.get('Score', '')}  ·  Quality: {r.get('Quality Flag', '')}  ·  "
                     f"Valuation: {r.get('Valuation Flag', '')}"
                 )
         else:
             lines.append("- None")
 
-        lines.extend(["", "Cheap but Low Quality:"])
+        lines.extend(["", "Cheap but Low Quality"])
         if cheap_but_low_quality:
             for r in cheap_but_low_quality[:10]:
                 lines.append(
-                    f"- {r['Ticker']} | Score {r.get('Score', '')} | Valuation: {r.get('Valuation Flag', '')} | "
+                    f"- {r['Ticker']}  ·  Score {r.get('Score', '')}  ·  Valuation: {r.get('Valuation Flag', '')}  ·  "
                     f"Quality: {r.get('Quality Flag', '')}"
                 )
         else:
             lines.append("- None")
 
-        lines.extend(["", "Cheapest vs peer group:"])
+        lines.extend(["", "Cheapest vs Peer Group"])
         if cheapest:
             for p in cheapest[:15]:
-                lines.append(f"- {p['Ticker']} | {p['Peer Group']} | {p['Relative Valuation Flag']} | EV/Revenue {p['EV/Revenue']} vs median {p['Peer Median EV/Revenue']}")
+                lines.append(f"- {p['Ticker']}  ·  {p['Peer Group']}  ·  {p['Relative Valuation Flag']}  ·  EV/Revenue {p['EV/Revenue']} vs median {p['Peer Median EV/Revenue']}")
         else:
             lines.append("- None")
 
-        lines.extend(["", "Strong quality / balance peer signals:"])
+        lines.extend(["", "Strong Quality / Balance Peer Signals"])
         if strongest:
             for p in strongest[:15]:
-                lines.append(f"- {p['Ticker']} | {p['Peer Group']} | Quality: {p['Relative Quality Flag']} | Balance: {p['Relative Balance Flag']}")
+                lines.append(f"- {p['Ticker']}  ·  {p['Peer Group']}  ·  Quality: {p['Relative Quality Flag']}  ·  Balance: {p['Relative Balance Flag']}")
         else:
             lines.append("- None")
 
-        lines.extend(["", "Missing data / warning list:"])
+        lines.extend(["", "Missing Data / Warning List"])
         if warnings:
             for r in warnings[:20]:
-                lines.append(f"- {r['Ticker']} | {r.get('Data Confidence Flag', '')} | {r.get('Missing / Weak Areas', '')}")
+                lines.append(f"- {r['Ticker']}  ·  {r.get('Data Confidence Flag', '')}  ·  {r.get('Missing / Weak Areas', '')}")
         else:
             lines.append("- None")
 
