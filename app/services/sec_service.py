@@ -10,27 +10,46 @@ import requests
 SEC_TICKER_URL = "https://www.sec.gov/files/company_tickers.json"
 SEC_COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik10}.json"
 
+SEC_TAXONOMIES = ("us-gaap", "ifrs-full")
+
 FIELD_CONCEPTS: Dict[str, list[str]] = {
-    "revenue": ["RevenueFromContractWithCustomerExcludingAssessedTax", "Revenues", "SalesRevenueNet"],
+    "revenue": [
+        "RevenueFromContractWithCustomerExcludingAssessedTax",
+        "Revenues",
+        "SalesRevenueNet",
+        "Revenue",
+        "RevenueFromContractsWithCustomers",
+    ],
     "gross_profit": ["GrossProfit"],
     "cost_of_revenue": [
         "CostOfRevenue",
         "CostOfGoodsAndServicesSold",
         "CostOfGoodsSold",
         "CostOfSalesRevenue",
+        "CostOfSales",
     ],
-    "operating_income": ["OperatingIncomeLoss"],
+    "operating_income": ["OperatingIncomeLoss", "ProfitLossFromOperatingActivities"],
     "net_income": ["NetIncomeLoss", "ProfitLoss"],
-    "eps_basic": ["EarningsPerShareBasic"],
-    "eps_diluted": ["EarningsPerShareDiluted"],
-    "research_and_development": ["ResearchAndDevelopmentExpense"],
-    "selling_general_admin": ["SellingGeneralAndAdministrativeExpense", "GeneralAndAdministrativeExpense"],
-    "share_based_compensation": ["ShareBasedCompensation", "ShareBasedCompensationArrangementByShareBasedPaymentAwardExpense"],
+    "eps_basic": ["EarningsPerShareBasic", "BasicEarningsLossPerShare", "BasicEarningsLossPerShareFromContinuingOperations"],
+    "eps_diluted": ["EarningsPerShareDiluted", "DilutedEarningsLossPerShare", "DilutedEarningsLossPerShareFromContinuingOperations"],
+    "research_and_development": ["ResearchAndDevelopmentExpense", "ResearchAndDevelopmentExpenseByFunction"],
+    "selling_general_admin": [
+        "SellingGeneralAndAdministrativeExpense",
+        "GeneralAndAdministrativeExpense",
+        "SellingAndMarketingExpense",
+        "AdministrativeExpense",
+    ],
+    "share_based_compensation": [
+        "ShareBasedCompensation",
+        "ShareBasedCompensationArrangementByShareBasedPaymentAwardExpense",
+        "SharebasedPaymentExpense",
+    ],
     "operating_cash_flow": [
         "NetCashProvidedByUsedInOperatingActivities",
         "NetCashProvidedByUsedInOperatingActivitiesContinuingOperations",
         "CashProvidedByUsedInOperatingActivities",
         "NetCashProvidedByOperatingActivities",
+        "CashFlowsFromUsedInOperatingActivities",
     ],
     "capital_expenditures": [
         "PaymentsToAcquirePropertyPlantAndEquipment",
@@ -38,21 +57,42 @@ FIELD_CONCEPTS: Dict[str, list[str]] = {
         "PaymentsToAcquirePropertyPlantAndEquipmentAndIntangibleAssets",
         "CapitalExpendituresIncurredButNotYetPaid",
         "PaymentsForProceedsFromProductiveAssets",
+        "PurchaseOfPropertyPlantAndEquipmentClassifiedAsInvestingActivities",
+        "PurchaseOfPropertyPlantAndEquipment",
     ],
     "depreciation_amortization": [
         "DepreciationDepletionAndAmortization",
         "DepreciationDepletionAndAmortizationPropertyPlantAndEquipment",
         "DepreciationAndAmortization",
+        "DepreciationAndAmortisationExpense",
+        "DepreciationAmortisationAndImpairmentExpense",
     ],
-    "cash_and_equivalents": ["CashAndCashEquivalentsAtCarryingValue", "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents"],
-    "current_assets": ["AssetsCurrent"],
-    "current_liabilities": ["LiabilitiesCurrent"],
+    "cash_and_equivalents": [
+        "CashAndCashEquivalentsAtCarryingValue",
+        "CashCashEquivalentsRestrictedCashAndRestrictedCashEquivalents",
+        "CashAndCashEquivalents",
+    ],
+    "current_assets": ["AssetsCurrent", "CurrentAssets"],
+    "current_liabilities": ["LiabilitiesCurrent", "CurrentLiabilities"],
     "total_assets": ["Assets"],
-    "total_equity": ["StockholdersEquity", "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest"],
-    "debt_current": ["DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings"],
-    "debt_noncurrent": ["LongTermDebtNoncurrent"],
-    "shares_basic": ["WeightedAverageNumberOfSharesOutstandingBasic", "WeightedAverageNumberOfShareOutstandingBasic"],
-    "shares_diluted": ["WeightedAverageNumberOfDilutedSharesOutstanding", "WeightedAverageNumberOfSharesOutstandingDiluted"],
+    "total_equity": [
+        "StockholdersEquity",
+        "StockholdersEquityIncludingPortionAttributableToNoncontrollingInterest",
+        "Equity",
+        "EquityAttributableToOwnersOfParent",
+    ],
+    "debt_current": ["DebtCurrent", "LongTermDebtCurrent", "ShortTermBorrowings", "CurrentBorrowings", "CurrentLeaseLiabilities"],
+    "debt_noncurrent": ["LongTermDebtNoncurrent", "NoncurrentBorrowings", "NoncurrentLeaseLiabilities"],
+    "shares_basic": [
+        "WeightedAverageNumberOfSharesOutstandingBasic",
+        "WeightedAverageNumberOfShareOutstandingBasic",
+        "WeightedAverageNumberOfOrdinarySharesOutstandingBasic",
+    ],
+    "shares_diluted": [
+        "WeightedAverageNumberOfDilutedSharesOutstanding",
+        "WeightedAverageNumberOfSharesOutstandingDiluted",
+        "WeightedAverageNumberOfOrdinarySharesOutstandingDiluted",
+    ],
 }
 
 FALLBACK_CONCEPT_RULES = {
@@ -64,6 +104,7 @@ FALLBACK_CONCEPT_RULES = {
         ["payments", "acquire", "property", "plant", "equipment"],
         ["payments", "acquire", "productive", "assets"],
         ["payments", "purchase", "property", "equipment"],
+        ["purchase", "property", "plant", "equipment"],
         ["capital", "expenditure"],
     ],
 }
@@ -117,11 +158,22 @@ def companyfacts_for_cik(cik: int, user_agent: str) -> dict:
 
 
 def concept_units(companyfacts: dict, concept: str) -> dict:
-    return companyfacts.get("facts", {}).get("us-gaap", {}).get(concept, {}).get("units", {})
+    facts = companyfacts.get("facts", {})
+    for taxonomy in SEC_TAXONOMIES:
+        units = facts.get(taxonomy, {}).get(concept, {}).get("units", {})
+        if units:
+            return units
+    return {}
 
 
-def all_us_gaap_concepts(companyfacts: dict) -> list[str]:
-    return list(companyfacts.get("facts", {}).get("us-gaap", {}).keys())
+def all_sec_concepts(companyfacts: dict) -> list[str]:
+    concepts = []
+    facts = companyfacts.get("facts", {})
+    for taxonomy in SEC_TAXONOMIES:
+        for concept in facts.get(taxonomy, {}).keys():
+            if concept not in concepts:
+                concepts.append(concept)
+    return concepts
 
 
 def fallback_concepts_for_field(companyfacts: dict, field: str) -> list[str]:
@@ -130,7 +182,7 @@ def fallback_concepts_for_field(companyfacts: dict, field: str) -> list[str]:
         return []
 
     matches = []
-    for concept in all_us_gaap_concepts(companyfacts):
+    for concept in all_sec_concepts(companyfacts):
         low = concept.lower()
         for rule in rules:
             if all(token in low for token in rule):
@@ -148,7 +200,7 @@ def concepts_for_field(companyfacts: dict, field: str) -> list[str]:
 
 
 def choose_best_unit(units: dict) -> Optional[str]:
-    for unit in ("USD", "shares", "USD/shares", "pure"):
+    for unit in ("USD", "TWD", "shares", "USD/shares", "TWD/shares", "pure"):
         if unit in units:
             return unit
     return next(iter(units.keys()), None)
