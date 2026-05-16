@@ -10,7 +10,7 @@ import requests
 SEC_TICKER_URL = "https://www.sec.gov/files/company_tickers.json"
 SEC_COMPANYFACTS_URL = "https://data.sec.gov/api/xbrl/companyfacts/CIK{cik10}.json"
 
-SEC_TAXONOMIES = ("us-gaap", "ifrs-full")
+SEC_TAXONOMIES = ("us-gaap", "ifrs-full", "dei")
 
 FIELD_CONCEPTS: Dict[str, list[str]] = {
     "revenue": [
@@ -92,6 +92,7 @@ FIELD_CONCEPTS: Dict[str, list[str]] = {
         "WeightedAverageNumberOfDilutedSharesOutstanding",
         "WeightedAverageNumberOfSharesOutstandingDiluted",
         "WeightedAverageNumberOfOrdinarySharesOutstandingDiluted",
+        "EntityCommonStockSharesOutstanding",
     ],
 }
 
@@ -238,6 +239,10 @@ def fact_fiscal_year(fact: dict) -> int:
         end = str(fact.get("end") or "")
         if len(end) >= 4 and end[:4].isdigit():
             fy = int(end[:4])
+    if fy <= 0:
+        filed = str(fact.get("filed") or "")
+        if len(filed) >= 4 and filed[:4].isdigit():
+            fy = int(filed[:4])
     return fy
 
 
@@ -279,18 +284,22 @@ def annual_history_for_field(companyfacts: dict, field: str, max_years: int = 5)
         if not unit:
             continue
         for raw in units.get(unit, []):
-            if "val" not in raw or not is_annual_fact(raw):
+            if "val" not in raw:
+                continue
+            if not is_annual_fact(raw) and concept != "EntityCommonStockSharesOutstanding":
                 continue
             fy = fact_fiscal_year(raw)
             if fy <= 0:
                 continue
-            fact = make_fact(field, concept, unit, raw)
+            normalized_raw = dict(raw)
+            normalized_raw["fy"] = fy
+            fact = make_fact(field, concept, unit, normalized_raw)
             existing = by_year.get(fy)
             if existing is None:
                 by_year[fy] = fact
             else:
                 existing_raw = {"form": existing.form, "filed": existing.filed, "end": existing.end, "fy": existing.fy}
-                if fact_sort_key(raw) > fact_sort_key(existing_raw):
+                if fact_sort_key(normalized_raw) > fact_sort_key(existing_raw):
                     by_year[fy] = fact
     return [by_year[y] for y in sorted(by_year.keys(), reverse=True)[:max_years]]
 
@@ -353,7 +362,7 @@ def refresh_sec_rows(ticker: str, user_agent: str, years: int = 5) -> list[dict]
 
     if shares_hist:
         latest = shares_hist[0]
-        rows.append(row(ticker, cik, "derived", "shares_latest_for_dilution", latest, "Latest annual shares for dilution calculations."))
+        rows.append(row(ticker, cik, "derived", "shares_latest_for_dilution", latest, "Latest annual shares for dilution calculations. Uses weighted-average shares first, with DEI period-end shares as a fallback."))
         if len(shares_hist) >= 2 and shares_hist[1].value:
             val = float(latest.value) / float(shares_hist[1].value) - 1
             fact = SecFact("dilution_1y", "derived", "pure", val, latest.fy, latest.fp, latest.form, latest.filed, latest.start, latest.end, latest.accn, latest.frame)
