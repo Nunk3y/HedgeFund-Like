@@ -73,6 +73,7 @@ def calculate_model_readiness_for_ticker(ticker: str) -> None:
 
     missing = []
     realities = []
+    disclosure_notes = []
 
     if price_ok != "OK": missing.append("Price")
     if market_cap_ok != "OK": missing.append("Market cap")
@@ -90,7 +91,7 @@ def calculate_model_readiness_for_ticker(ticker: str) -> None:
     if rev_ok == "ZERO / PRE-REVENUE": realities.append("pre-revenue")
     if gp_ok in ("ZERO / PRE-REVENUE", "ZERO"): realities.append("zero gross profit")
     if fcf_ok == "NEGATIVE": realities.append("FCF-negative")
-    if expense_ok == "PARTIAL / OK": realities.append("partial SBC/R&D/SG&A")
+    if expense_ok == "PARTIAL / OK": disclosure_notes.append("partial SBC/R&D/SG&A disclosure")
 
     if core_score < 0.6:
         readiness = "NOT SCREEN READY"
@@ -110,6 +111,8 @@ def calculate_model_readiness_for_ticker(ticker: str) -> None:
         parts.append("Missing: " + ", ".join(missing))
     if realities:
         parts.append("Business realities: " + ", ".join(realities))
+    if disclosure_notes:
+        parts.append("Disclosure notes: " + ", ".join(disclosure_notes))
     missing_weak = " | ".join(parts) if parts else "None flagged"
 
     conn.execute(
