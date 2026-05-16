@@ -206,9 +206,16 @@ QHeaderView::section {
     padding: 11px 10px;
     border: 0px;
     border-bottom: 1px solid #3c516d;
+    border-right: 1px solid #22334a;
     font-weight: 900;
 }
 QHeaderView::section:hover { background-color: #1e293b; color: #ffffff; }
+QTableCornerButton::section {
+    background-color: #101b2d;
+    border: 0px;
+    border-bottom: 1px solid #3c516d;
+    border-right: 1px solid #3c516d;
+}
 QTabWidget::pane {
     border: 1px solid #3c516d;
     border-radius: 28px;
@@ -307,11 +314,19 @@ def polish_table(table: QTableWidget) -> None:
     table.setAlternatingRowColors(True)
     table.setShowGrid(False)
     table.setWordWrap(False)
-    table.verticalHeader().setVisible(False)
+    table.verticalHeader().setVisible(True)
+    table.verticalHeader().setFixedWidth(86)
+    table.verticalHeader().setDefaultAlignment(Qt.AlignCenter)
     table.horizontalHeader().setStretchLastSection(True)
     table.setSortingEnabled(True)
     table.setMouseTracking(True)
     table.setColumnWidth(0, 92)
+
+
+def set_row_ticker_header(table: QTableWidget, row: int, ticker: str) -> None:
+    item = QTableWidgetItem(str(ticker or ""))
+    item.setTextAlignment(Qt.AlignCenter)
+    table.setVerticalHeaderItem(row, item)
 
 
 def make_metric_card(label: str, value: str, subtext: str) -> tuple[QWidget, QLabel, QLabel]:
@@ -705,11 +720,15 @@ class MainWindow(QMainWindow):
 
     def refresh_watchlist(self) -> None:
         rows = list_tickers()
+        self.watchlist_table.setSortingEnabled(False)
         self.watchlist_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
-            values = [row["ticker"], row["company"] or "", row["peer_group"] or row["category"] or ""]
+            ticker = row["ticker"]
+            set_row_ticker_header(self.watchlist_table, r, ticker)
+            values = [ticker, row["company"] or "", row["peer_group"] or row["category"] or ""]
             for c, val in enumerate(values):
                 self.watchlist_table.setItem(r, c, QTableWidgetItem(str(val)))
+        self.watchlist_table.setSortingEnabled(True)
         self.watchlist_table.resizeColumnsToContents()
 
     def watchlist_clicked(self, row: int, col: int) -> None:
@@ -804,6 +823,7 @@ class MainWindow(QMainWindow):
         self.cache_table.setSortingEnabled(False)
         self.cache_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
+            set_row_ticker_header(self.cache_table, r, row["ticker"])
             values = [row["ticker"], row["source"], row["endpoint"], row["raw_field"], row["raw_value"], row["fiscal_year"], row["status"], row["sec_concept"], row["unit"], row["filed"]]
             for c, val in enumerate(values):
                 self.cache_table.setItem(r, c, QTableWidgetItem("" if val is None else str(val)))
@@ -815,6 +835,7 @@ class MainWindow(QMainWindow):
         self.market_table.setSortingEnabled(False)
         self.market_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
+            set_row_ticker_header(self.market_table, r, row["ticker"])
             for c, col in enumerate(self.market_columns):
                 self.market_table.setItem(r, c, QTableWidgetItem(fmt(row[col])))
         self.market_table.setSortingEnabled(True)
@@ -825,6 +846,7 @@ class MainWindow(QMainWindow):
         self.readiness_table.setSortingEnabled(False)
         self.readiness_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
+            set_row_ticker_header(self.readiness_table, r, row["ticker"])
             for c, col in enumerate(self.readiness_columns):
                 self.readiness_table.setItem(r, c, QTableWidgetItem(fmt(row[col])))
         self.readiness_table.setSortingEnabled(True)
@@ -835,6 +857,7 @@ class MainWindow(QMainWindow):
         self.master_table.setSortingEnabled(False)
         self.master_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
+            set_row_ticker_header(self.master_table, r, row.get("Ticker", ""))
             for c, col in enumerate(self.master_columns):
                 text = str(row.get(col, ""))
                 item = QTableWidgetItem(text)
@@ -857,6 +880,7 @@ class MainWindow(QMainWindow):
         self.peer_table.setSortingEnabled(False)
         self.peer_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
+            set_row_ticker_header(self.peer_table, r, row.get("Ticker", ""))
             for c, col in enumerate(self.peer_columns):
                 text = str(row.get(col, ""))
                 item = QTableWidgetItem(text)
