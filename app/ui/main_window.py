@@ -71,11 +71,24 @@ QLabel#Brand {
     font-weight: 900;
     letter-spacing: 0.2px;
 }
-QLabel#NavItem {
+QPushButton#NavButton {
+    background-color: transparent;
+    border: 1px solid transparent;
     color: #cbd5e1;
     font-size: 10px;
     font-weight: 800;
-    padding: 2px 8px;
+    padding: 7px 10px;
+    border-radius: 12px;
+}
+QPushButton#NavButton:hover {
+    background-color: #0f172a;
+    border: 1px solid #334155;
+    color: #ffffff;
+}
+QPushButton#NavButton:pressed {
+    background-color: #1d4ed8;
+    border: 1px solid #60a5fa;
+    color: #ffffff;
 }
 QLabel#HeroEyebrow {
     color: #60a5fa;
@@ -343,14 +356,16 @@ class MainWindow(QMainWindow):
         nav.setObjectName("TopNav")
         nav_layout = QHBoxLayout(nav)
         nav_layout.setContentsMargins(18, 10, 18, 10)
-        nav_layout.setSpacing(18)
+        nav_layout.setSpacing(12)
         brand = QLabel("HedgeFund-Like")
         brand.setObjectName("Brand")
         nav_layout.addWidget(brand)
-        for label in ["Overview", "Watchlist", "Peers", "Data", "Settings"]:
-            item = QLabel(label)
-            item.setObjectName("NavItem")
-            nav_layout.addWidget(item)
+        for label, tab_index in [("Overview", 0), ("Watchlist", 1), ("Peers", 2), ("Data", 4), ("Settings", -1)]:
+            button = QPushButton(label)
+            button.setObjectName("NavButton")
+            button.setCursor(Qt.PointingHandCursor)
+            button.clicked.connect(lambda checked=False, idx=tab_index: self.navigate_top_nav(idx))
+            nav_layout.addWidget(button)
         nav_layout.addStretch()
         pill = QLabel("LOCAL-FIRST · PRIVATE DATA")
         pill.setObjectName("Pill")
@@ -437,10 +452,10 @@ class MainWindow(QMainWindow):
             action_layout.addWidget(button)
         left_layout.addWidget(action_group, 2)
 
-        center_tabs = QTabWidget()
-        center_tabs.setObjectName("WorkspaceTabs")
-        self.build_overview_tab(center_tabs)
-        self.build_data_tabs(center_tabs)
+        self.center_tabs = QTabWidget()
+        self.center_tabs.setObjectName("WorkspaceTabs")
+        self.build_overview_tab(self.center_tabs)
+        self.build_data_tabs(self.center_tabs)
 
         right = QWidget()
         right.setObjectName("DecisionPanel")
@@ -467,7 +482,7 @@ class MainWindow(QMainWindow):
         right_layout.addWidget(self.details)
 
         splitter.addWidget(left)
-        splitter.addWidget(center_tabs)
+        splitter.addWidget(self.center_tabs)
         splitter.addWidget(right)
         splitter.setSizes([390, 1040, 330])
         main_layout.addWidget(splitter)
@@ -476,6 +491,13 @@ class MainWindow(QMainWindow):
 
         self.selected_ticker = None
         self.refresh_all_tables()
+
+    def navigate_top_nav(self, tab_index: int) -> None:
+        if tab_index == -1:
+            self.sec_user_agent.setFocus()
+            self.details.setText("Settings are stored only in your local tech_screener.db file. Enter or update the SEC User-Agent and Finnhub API key in the left setup panel.")
+            return
+        self.center_tabs.setCurrentIndex(tab_index)
 
     def build_overview_tab(self, tabs: QTabWidget) -> None:
         overview = QWidget()
