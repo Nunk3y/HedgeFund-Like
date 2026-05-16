@@ -25,18 +25,6 @@ SEC_FIELD_TO_COL = {
     "dilution_3y": "dilution_3y",
 }
 
-FINNHUB_FIELD_TO_COL = {
-    ("quote", "c"): "price_per_share",
-    ("profile2", "marketCapitalization"): "market_cap_mm",
-    ("profile2", "shareOutstanding"): "shares_out_mm",
-    ("metric", "metric.52WeekHigh"): "high_52w",
-    ("metric", "metric.52WeekLow"): "low_52w",
-    ("metric", "metric.beta"): "beta",
-    ("metric", "metric.10DayAverageTradingVolume"): "avg_volume_m",
-    ("metric", "metric.peNormalizedAnnual"): "pe_ratio",
-    ("metric", "metric.epsNormalizedAnnual"): "eps_market",
-}
-
 
 def to_float(value) -> Optional[float]:
     if value is None:
