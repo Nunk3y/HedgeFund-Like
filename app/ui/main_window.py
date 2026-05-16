@@ -198,6 +198,7 @@ QTableWidget {
     selection-background-color: #1d4ed8;
     selection-color: #ffffff;
 }
+QTableWidget::viewport { background-color: #030814; }
 QTableWidget::item { padding: 9px; border-bottom: 1px solid #172033; }
 QTableWidget::item:hover { background-color: #111f34; }
 QHeaderView::section {
@@ -208,6 +209,13 @@ QHeaderView::section {
     border-bottom: 1px solid #3c516d;
     border-right: 1px solid #22334a;
     font-weight: 900;
+}
+QHeaderView::section:vertical {
+    background-color: #0b1728;
+    color: #ffffff;
+    border-bottom: 1px solid #26384f;
+    border-right: 1px solid #3c516d;
+    font-weight: 950;
 }
 QHeaderView::section:hover { background-color: #1e293b; color: #ffffff; }
 QTableCornerButton::section {
@@ -310,13 +318,15 @@ def flag_colors(text: str):
     return None, None
 
 
-def polish_table(table: QTableWidget) -> None:
+def polish_table(table: QTableWidget, sticky_ticker: bool = False) -> None:
     table.setAlternatingRowColors(True)
     table.setShowGrid(False)
     table.setWordWrap(False)
-    table.verticalHeader().setVisible(True)
-    table.verticalHeader().setFixedWidth(86)
-    table.verticalHeader().setDefaultAlignment(Qt.AlignCenter)
+    table.verticalHeader().setVisible(sticky_ticker)
+    if sticky_ticker:
+        table.verticalHeader().setFixedWidth(74)
+        table.verticalHeader().setDefaultAlignment(Qt.AlignCenter)
+        table.setColumnHidden(0, True)
     table.horizontalHeader().setStretchLastSection(True)
     table.setSortingEnabled(True)
     table.setMouseTracking(True)
@@ -613,7 +623,7 @@ class MainWindow(QMainWindow):
         self.master_table = QTableWidget()
         self.master_table.setColumnCount(len(self.master_columns))
         self.master_table.setHorizontalHeaderLabels(self.master_columns)
-        polish_table(self.master_table)
+        polish_table(self.master_table, sticky_ticker=True)
         tabs.addTab(self.master_table, "Master Watchlist")
 
         self.peer_columns = [
@@ -626,7 +636,7 @@ class MainWindow(QMainWindow):
         self.peer_table = QTableWidget()
         self.peer_table.setColumnCount(len(self.peer_columns))
         self.peer_table.setHorizontalHeaderLabels(self.peer_columns)
-        polish_table(self.peer_table)
+        polish_table(self.peer_table, sticky_ticker=True)
         tabs.addTab(self.peer_table, "Peer Comparison")
 
         cache_panel = QWidget()
@@ -645,8 +655,7 @@ class MainWindow(QMainWindow):
         self.cache_table = QTableWidget()
         self.cache_table.setColumnCount(10)
         self.cache_table.setHorizontalHeaderLabels(["Ticker", "Source", "Endpoint", "Field", "Value", "FY", "Status", "Concept", "Unit", "Filed"])
-        polish_table(self.cache_table)
-        cache_layout.addWidget(self.cache_table)
+        polish_table(self.cache_table, sticky_ticker=True)
         tabs.addTab(cache_panel, "API Cache")
 
         self.market_columns = [
@@ -660,7 +669,7 @@ class MainWindow(QMainWindow):
         self.market_table = QTableWidget()
         self.market_table.setColumnCount(len(self.market_columns))
         self.market_table.setHorizontalHeaderLabels(self.market_columns)
-        polish_table(self.market_table)
+        polish_table(self.market_table, sticky_ticker=True)
         tabs.addTab(self.market_table, "Market Data")
 
         self.readiness_columns = [
@@ -671,7 +680,7 @@ class MainWindow(QMainWindow):
         self.readiness_table = QTableWidget()
         self.readiness_table.setColumnCount(len(self.readiness_columns))
         self.readiness_table.setHorizontalHeaderLabels(self.readiness_columns)
-        polish_table(self.readiness_table)
+        polish_table(self.readiness_table, sticky_ticker=True)
         tabs.addTab(self.readiness_table, "Model Readiness")
 
     def closeEvent(self, event) -> None:
@@ -724,7 +733,6 @@ class MainWindow(QMainWindow):
         self.watchlist_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
             ticker = row["ticker"]
-            set_row_ticker_header(self.watchlist_table, r, ticker)
             values = [ticker, row["company"] or "", row["peer_group"] or row["category"] or ""]
             for c, val in enumerate(values):
                 self.watchlist_table.setItem(r, c, QTableWidgetItem(str(val)))
@@ -828,6 +836,7 @@ class MainWindow(QMainWindow):
             for c, val in enumerate(values):
                 self.cache_table.setItem(r, c, QTableWidgetItem("" if val is None else str(val)))
         self.cache_table.setSortingEnabled(True)
+        self.cache_table.setColumnHidden(0, True)
         self.cache_table.resizeColumnsToContents()
 
     def refresh_market_table(self, ticker=None) -> None:
@@ -839,6 +848,7 @@ class MainWindow(QMainWindow):
             for c, col in enumerate(self.market_columns):
                 self.market_table.setItem(r, c, QTableWidgetItem(fmt(row[col])))
         self.market_table.setSortingEnabled(True)
+        self.market_table.setColumnHidden(0, True)
         self.market_table.resizeColumnsToContents()
 
     def refresh_readiness_table(self, ticker=None) -> None:
@@ -850,6 +860,7 @@ class MainWindow(QMainWindow):
             for c, col in enumerate(self.readiness_columns):
                 self.readiness_table.setItem(r, c, QTableWidgetItem(fmt(row[col])))
         self.readiness_table.setSortingEnabled(True)
+        self.readiness_table.setColumnHidden(0, True)
         self.readiness_table.resizeColumnsToContents()
 
     def refresh_master_table(self) -> None:
@@ -873,6 +884,7 @@ class MainWindow(QMainWindow):
                         item.setForeground(fg)
                 self.master_table.setItem(r, c, item)
         self.master_table.setSortingEnabled(True)
+        self.master_table.setColumnHidden(0, True)
         self.master_table.resizeColumnsToContents()
 
     def refresh_peer_table(self) -> None:
@@ -891,6 +903,7 @@ class MainWindow(QMainWindow):
                         item.setForeground(fg)
                 self.peer_table.setItem(r, c, item)
         self.peer_table.setSortingEnabled(True)
+        self.peer_table.setColumnHidden(0, True)
         self.peer_table.resizeColumnsToContents()
 
     def refresh_hud_panel(self) -> None:
