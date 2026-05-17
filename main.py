@@ -95,10 +95,13 @@ WORKFLOW_TABS = [
     "4. Filing Review",
     "5. Historical Picture",
     "6. Business Quality",
-    "7. Peer Comparison",
-    "8. Market Behavior",
-    "9. Variant View",
-    "10. Decision",
+    "7. Commercial Reality",
+    "8. Peer Comparison",
+    "9. Valuation",
+    "10. Market Behavior",
+    "11. Variant View",
+    "12. Decision",
+    "13. Portfolio Management",
 ]
 
 
@@ -114,7 +117,7 @@ class StreamlinedMainWindow(MainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.hide_top_nav_buttons()
-        self.build_ten_step_workflow_tabs()
+        self.build_research_workflow_tabs()
         self.auto_fit_tab_labels()
         self.update_active_tab_header()
 
@@ -132,10 +135,10 @@ class StreamlinedMainWindow(MainWindow):
             for index in range(tabs.count()):
                 tab_bar.setTabToolTip(index, tabs.tabText(index))
             tab_bar.setStyleSheet(
-                "QTabBar::tab { min-width: 0px; padding-left: 10px; padding-right: 10px; }"
+                "QTabBar::tab { min-width: 0px; padding-left: 8px; padding-right: 8px; }"
             )
 
-    def build_ten_step_workflow_tabs(self) -> None:
+    def build_research_workflow_tabs(self) -> None:
         if not hasattr(self, "center_tabs"):
             return
 
@@ -150,10 +153,11 @@ class StreamlinedMainWindow(MainWindow):
             self.make_notes_panel(
                 "1. Mandate",
                 "Define the job of the stock before analyzing it.",
-                "Stock type / mandate:\n"
-                "Time horizon:\n"
+                "Mandate type: Long-term compounder / GARP / Turnaround / Cyclical recovery / Special situation / Deep value / Speculative catalyst / Peer-relative / Future-tech option\n"
+                "Time horizon: 3 months / 1-2 years / 3-5 years\n"
                 "Why this belongs on the watchlist:\n"
-                "Portfolio role:\n"
+                "Portfolio role: Core / researched individual / speculative future-tech\n"
+                "ETF alternative to beat:\n"
                 "Initial reason to reject it:\n",
             ),
             "1. Mandate",
@@ -162,7 +166,7 @@ class StreamlinedMainWindow(MainWindow):
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
                 "2. First-Pass Screen",
-                "Use the app output to decide whether the ticker deserves deeper work.",
+                "Use the app output to decide whether the ticker deserves deeper work. A score is not a buy signal.",
                 [
                     ("Overview", existing_tabs.get("Overview")),
                     ("Master Watchlist", existing_tabs.get("Master Watchlist")),
@@ -175,15 +179,17 @@ class StreamlinedMainWindow(MainWindow):
         self.center_tabs.addTab(
             self.make_notes_panel(
                 "3. Business",
-                "Explain the business before trusting a model.",
+                "Start with the business, not the stock price.",
                 "What does the company sell?\n"
                 "Who are the customers?\n"
-                "Why do customers buy it?\n"
+                "Why do customers choose it?\n"
                 "Recurring, cyclical, regulated, or one-time demand?\n"
+                "Does the company have pricing power?\n"
                 "Key cost drivers:\n"
                 "Main competitors:\n"
                 "Obsolescence risk:\n"
-                "Price maker or price taker?\n",
+                "What must go right for the company to keep growing?\n"
+                "Five-sentence business explanation:\n",
             ),
             "3. Business",
         )
@@ -202,11 +208,18 @@ class StreamlinedMainWindow(MainWindow):
                             "Latest 10-Q reviewed?\n"
                             "Recent 8-Ks reviewed?\n"
                             "Proxy reviewed?\n"
+                            "Earnings call reviewed?\n"
+                            "Investor presentation reviewed as management marketing?\n"
                             "Risk factors notes:\n"
                             "MD&A notes:\n"
-                            "Liquidity / debt notes:\n"
-                            "Segments / customer concentration notes:\n"
-                            "Legal proceedings notes:\n",
+                            "Financial statements / notes:\n"
+                            "Liquidity / debt maturities:\n"
+                            "Segment reporting:\n"
+                            "Customer concentration:\n"
+                            "Legal proceedings:\n"
+                            "Related-party transactions:\n"
+                            "SBC / share-count changes:\n"
+                            "Executive compensation / insider ownership:\n"
                         ),
                     ),
                     ("API Cache", existing_tabs.get("API Cache")),
@@ -230,9 +243,13 @@ class StreamlinedMainWindow(MainWindow):
                             "Revenue trend:\n"
                             "Gross margin trend:\n"
                             "Operating margin trend:\n"
-                            "FCF trend:\n"
-                            "Cash / debt trend:\n"
+                            "Net income trend:\n"
+                            "Operating cash flow trend:\n"
+                            "Capex / FCF trend:\n"
+                            "Cash / debt / current ratio trend:\n"
                             "Share count / dilution trend:\n"
+                            "SBC as % of revenue:\n"
+                            "ROIC, if meaningful:\n"
                             "Main concern from history:\n",
                         ),
                     ),
@@ -254,9 +271,14 @@ class StreamlinedMainWindow(MainWindow):
                             "Business quality notes",
                             "Add qualitative judgment that the score alone cannot capture.",
                             "Durable revenue growth?\n"
+                            "High or improving gross margins?\n"
+                            "Positive operating leverage?\n"
+                            "Positive free cash flow?\n"
+                            "Strong balance sheet?\n"
+                            "Low dilution?\n"
                             "Pricing power?\n"
-                            "Operating leverage?\n"
                             "Recurring/repeat demand?\n"
+                            "Competitive advantage:\n"
                             "Management/capital allocation notes:\n"
                             "Main quality weakness:\n",
                         ),
@@ -267,14 +289,66 @@ class StreamlinedMainWindow(MainWindow):
         )
 
         self.center_tabs.addTab(
+            self.make_notes_panel(
+                "7. Commercial Reality",
+                "Use this especially for future-tech and physical-product companies.",
+                "Commercial reality stage: Real business / Early commercial / Pre-commercial / Concept-speculation\n"
+                "Is there a real product today?\n"
+                "Is revenue material or mostly future promises?\n"
+                "Are customers paying now?\n"
+                "Repeat buyers or one-time pilots?\n"
+                "Are gross margins positive and improving?\n"
+                "Does the company need constant capital raises?\n"
+                "Is the technology proven outside demos?\n"
+                "Regulatory approval risk:\n"
+                "Infrastructure dependency:\n"
+                "Commercialization timeline:\n"
+                "Can larger competitors copy/outspend it?\n"
+                "Owns manufacturing capacity or depends on partners?\n"
+                "Unit economics proven at scale?\n"
+                "Do partnerships produce meaningful revenue or just headlines?\n"
+                "Position-size implication:\n",
+            ),
+            "7. Commercial Reality",
+        )
+
+        self.center_tabs.addTab(
             existing_tabs.get("Peer Comparison") or self.make_missing_panel("Peer Comparison"),
-            "7. Peer Comparison",
+            "8. Peer Comparison",
+        )
+
+        self.center_tabs.addTab(
+            self.make_notes_panel(
+                "9. Valuation",
+                "Build bear/base/bull valuation and decide what assumptions must be true.",
+                "Primary method: EV/Revenue / EV/FCF / P/E / DCF / Sum-of-the-parts\n"
+                "ETF alternative:\n"
+                "EV/Revenue:\n"
+                "EV/FCF:\n"
+                "P/S:\n"
+                "P/E:\n"
+                "Peer median:\n"
+                "Bear scenario: probability / value / reason\n"
+                "Base scenario: probability / value / reason\n"
+                "Bull scenario: probability / value / reason\n"
+                "Expected value:\n"
+                "Current price:\n"
+                "Base-case upside:\n"
+                "Bear-case downside:\n"
+                "Is downside survivable?\n"
+                "Current share count:\n"
+                "Expected future share count:\n"
+                "Upside before dilution:\n"
+                "Upside after dilution:\n"
+                "What assumptions must be true for the stock to be attractive?\n",
+            ),
+            "9. Valuation",
         )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "8. Market Behavior",
-                "Use price behavior to understand trend, drawdown, volatility, and position-size risk.",
+                "10. Market Behavior",
+                "Use price behavior for timing and risk awareness. It is evidence, not the thesis.",
                 [
                     ("Price Trends", existing_tabs.get("Price Trends")),
                     ("Price History", existing_tabs.get("Price History")),
@@ -292,36 +366,68 @@ class StreamlinedMainWindow(MainWindow):
                     ),
                 ],
             ),
-            "8. Market Behavior",
+            "10. Market Behavior",
         )
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "9. Variant View",
+                "11. Variant View",
                 "Write why the market may be wrong and what would force a reprice.",
                 "Consensus view:\n"
                 "My variant view:\n"
                 "Evidence:\n"
                 "Catalyst:\n"
                 "Timeline:\n"
-                "Kill criteria / what proves me wrong:\n",
+                "Kill criteria / what proves me wrong:\n"
+                "Bad-thesis check: Am I relying on hype, TAM, partnerships, price targets, or 'it could 10x'?\n"
             ),
-            "9. Variant View",
+            "11. Variant View",
         )
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "10. Decision",
+                "12. Decision",
                 "Convert the research into a decision bucket. The score points to where to look; the memo decides what to do.",
                 "Decision: Pass / Watchlist / Deep Dive / Candidate Position\n"
                 "Reason:\n"
                 "Required next work:\n"
-                "Next review date:\n"
+                "Next review trigger/date:\n"
+                "Pre-mortem: This investment failed because...\n"
                 "Max position size if it becomes actionable:\n"
                 "Max loss / review trigger:\n"
-                "Correlated exposures:\n",
+                "Correlated exposures:\n"
+                "Why this stock instead of the ETF alternative?\n"
             ),
-            "10. Decision",
+            "12. Decision",
+        )
+
+        self.center_tabs.addTab(
+            self.make_notes_panel(
+                "13. Portfolio Management",
+                "Check whether this stock improves the portfolio after risk, concentration, sizing, taxes, and ETF alternatives.",
+                "Portfolio date:\n"
+                "Total portfolio value:\n"
+                "Core ETF / diversified funds target %:\n"
+                "Core ETF / diversified funds actual %:\n"
+                "Researched individual stocks target %:\n"
+                "Researched individual stocks actual %:\n"
+                "Speculative future-tech target %:\n"
+                "Speculative future-tech actual %:\n"
+                "Cash reserve separate? Months covered:\n"
+                "Ticker position %:\n"
+                "Max allowed %:\n"
+                "Theme:\n"
+                "Theme exposure after purchase:\n"
+                "Theme limit:\n"
+                "Largest position:\n"
+                "Largest theme:\n"
+                "Total speculative exposure:\n"
+                "Does this stock still beat the ETF alternative?\n"
+                "Would I buy this position again today?\n"
+                "Tax issue before buying/selling?\n"
+                "Portfolio action: Add / Hold / Reduce / Sell / Rebalance / Do nothing\n",
+            ),
+            "13. Portfolio Management",
         )
 
         if self.center_tabs.count() > 0:
