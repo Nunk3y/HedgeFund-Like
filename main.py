@@ -88,25 +88,17 @@ EXTRA_PEER_GROUPS = [
     "Fusion-Adjacent / Industrial Investor",
 ]
 
-# Top-level workflow follows docs/hedge_fund_stock_analysis_guide.md -> "How To Use This App".
 WORKFLOW_TABS = [
-    "Overview",
-    "Master Watchlist",
-    "Score Details",
-    "Data Quality",
-    "Peer Comparison",
-    "Data Details",
-    "Research Guide",
-]
-
-# Nested Data Details order follows the same guide; Market Data is appended as a raw/normalized audit view.
-BULK_DATA_TABS = [
-    "Historical Fundamentals",
-    "Price Trends",
-    "Price History",
-    "API Cache",
-    "Model Readiness",
-    "Market Data",
+    "1. Mandate",
+    "2. First-Pass Screen",
+    "3. Business",
+    "4. Filing Review",
+    "5. Historical Picture",
+    "6. Business Quality",
+    "7. Peer Comparison",
+    "8. Market Behavior",
+    "9. Variant View",
+    "10. Decision",
 ]
 
 
@@ -122,8 +114,7 @@ class StreamlinedMainWindow(MainWindow):
     def __init__(self) -> None:
         super().__init__()
         self.hide_top_nav_buttons()
-        self.group_bulk_data_tabs()
-        self.apply_research_guide_tab_order()
+        self.build_ten_step_workflow_tabs()
         self.auto_fit_tab_labels()
         self.update_active_tab_header()
 
@@ -141,54 +132,254 @@ class StreamlinedMainWindow(MainWindow):
             for index in range(tabs.count()):
                 tab_bar.setTabToolTip(index, tabs.tabText(index))
             tab_bar.setStyleSheet(
-                "QTabBar::tab { min-width: 0px; padding-left: 12px; padding-right: 12px; }"
+                "QTabBar::tab { min-width: 0px; padding-left: 10px; padding-right: 10px; }"
             )
 
-    def apply_research_guide_tab_order(self) -> None:
-        if not hasattr(self, "center_tabs"):
-            return
-        for target_index, tab_name in enumerate(WORKFLOW_TABS):
-            current_index = self.find_tab_index(tab_name)
-            if current_index >= 0 and current_index != target_index:
-                self.center_tabs.tabBar().moveTab(current_index, target_index)
-        if self.find_tab_index("Overview") >= 0:
-            self.center_tabs.setCurrentIndex(self.find_tab_index("Overview"))
-
-    def group_bulk_data_tabs(self) -> None:
+    def build_ten_step_workflow_tabs(self) -> None:
         if not hasattr(self, "center_tabs"):
             return
 
-        data_details = QWidget()
-        data_details.setObjectName("DataPanel")
-        data_layout = QVBoxLayout(data_details)
-        data_layout.setContentsMargins(16, 16, 16, 16)
-        data_layout.setSpacing(10)
+        existing_tabs: dict[str, QWidget] = {}
+        while self.center_tabs.count() > 0:
+            name = self.center_tabs.tabText(0)
+            widget = self.center_tabs.widget(0)
+            existing_tabs[name] = widget
+            self.center_tabs.removeTab(0)
 
-        title = QLabel("Data Details")
+        self.center_tabs.addTab(
+            self.make_notes_panel(
+                "1. Mandate",
+                "Define the job of the stock before analyzing it.",
+                "Stock type / mandate:\n"
+                "Time horizon:\n"
+                "Why this belongs on the watchlist:\n"
+                "Portfolio role:\n"
+                "Initial reason to reject it:\n",
+            ),
+            "1. Mandate",
+        )
+
+        self.center_tabs.addTab(
+            self.make_nested_tab_panel(
+                "2. First-Pass Screen",
+                "Use the app output to decide whether the ticker deserves deeper work.",
+                [
+                    ("Overview", existing_tabs.get("Overview")),
+                    ("Master Watchlist", existing_tabs.get("Master Watchlist")),
+                    ("Data Quality", existing_tabs.get("Data Quality")),
+                ],
+            ),
+            "2. First-Pass Screen",
+        )
+
+        self.center_tabs.addTab(
+            self.make_notes_panel(
+                "3. Business",
+                "Explain the business before trusting a model.",
+                "What does the company sell?\n"
+                "Who are the customers?\n"
+                "Why do customers buy it?\n"
+                "Recurring, cyclical, regulated, or one-time demand?\n"
+                "Key cost drivers:\n"
+                "Main competitors:\n"
+                "Obsolescence risk:\n"
+                "Price maker or price taker?\n",
+            ),
+            "3. Business",
+        )
+
+        self.center_tabs.addTab(
+            self.make_nested_tab_panel(
+                "4. Filing Review",
+                "Use filings as the source of truth. Read what changed, not only the numbers.",
+                [
+                    (
+                        "Checklist",
+                        self.make_notes_panel(
+                            "Filing checklist",
+                            "Track the filing work required before a serious thesis.",
+                            "Latest 10-K reviewed?\n"
+                            "Latest 10-Q reviewed?\n"
+                            "Recent 8-Ks reviewed?\n"
+                            "Proxy reviewed?\n"
+                            "Risk factors notes:\n"
+                            "MD&A notes:\n"
+                            "Liquidity / debt notes:\n"
+                            "Segments / customer concentration notes:\n"
+                            "Legal proceedings notes:\n",
+                        ),
+                    ),
+                    ("API Cache", existing_tabs.get("API Cache")),
+                ],
+            ),
+            "4. Filing Review",
+        )
+
+        self.center_tabs.addTab(
+            self.make_nested_tab_panel(
+                "5. Historical Picture",
+                "Build the 3-5 year operating picture and look for trend changes.",
+                [
+                    ("Historical Fundamentals", existing_tabs.get("Historical Fundamentals")),
+                    ("Market Data", existing_tabs.get("Market Data")),
+                    (
+                        "Trend Notes",
+                        self.make_notes_panel(
+                            "Historical trend notes",
+                            "Summarize the operating history in plain English.",
+                            "Revenue trend:\n"
+                            "Gross margin trend:\n"
+                            "Operating margin trend:\n"
+                            "FCF trend:\n"
+                            "Cash / debt trend:\n"
+                            "Share count / dilution trend:\n"
+                            "Main concern from history:\n",
+                        ),
+                    ),
+                ],
+            ),
+            "5. Historical Picture",
+        )
+
+        self.center_tabs.addTab(
+            self.make_nested_tab_panel(
+                "6. Business Quality",
+                "Judge whether the business is durable, improving, fragile, or deteriorating.",
+                [
+                    ("Score Details", existing_tabs.get("Score Details")),
+                    ("Model Readiness", existing_tabs.get("Model Readiness")),
+                    (
+                        "Quality Notes",
+                        self.make_notes_panel(
+                            "Business quality notes",
+                            "Add qualitative judgment that the score alone cannot capture.",
+                            "Durable revenue growth?\n"
+                            "Pricing power?\n"
+                            "Operating leverage?\n"
+                            "Recurring/repeat demand?\n"
+                            "Management/capital allocation notes:\n"
+                            "Main quality weakness:\n",
+                        ),
+                    ),
+                ],
+            ),
+            "6. Business Quality",
+        )
+
+        self.center_tabs.addTab(
+            existing_tabs.get("Peer Comparison") or self.make_missing_panel("Peer Comparison"),
+            "7. Peer Comparison",
+        )
+
+        self.center_tabs.addTab(
+            self.make_nested_tab_panel(
+                "8. Market Behavior",
+                "Use price behavior to understand trend, drawdown, volatility, and position-size risk.",
+                [
+                    ("Price Trends", existing_tabs.get("Price Trends")),
+                    ("Price History", existing_tabs.get("Price History")),
+                    (
+                        "Market Notes",
+                        self.make_notes_panel(
+                            "Market behavior notes",
+                            "Separate entry timing from the actual company thesis.",
+                            "1M / 3M / 6M / 1Y return interpretation:\n"
+                            "Momentum flag interpretation:\n"
+                            "Drawdown interpretation:\n"
+                            "Volatility / position-size implication:\n"
+                            "What would price action confirm or invalidate?\n",
+                        ),
+                    ),
+                ],
+            ),
+            "8. Market Behavior",
+        )
+
+        self.center_tabs.addTab(
+            self.make_notes_panel(
+                "9. Variant View",
+                "Write why the market may be wrong and what would force a reprice.",
+                "Consensus view:\n"
+                "My variant view:\n"
+                "Evidence:\n"
+                "Catalyst:\n"
+                "Timeline:\n"
+                "Kill criteria / what proves me wrong:\n",
+            ),
+            "9. Variant View",
+        )
+
+        self.center_tabs.addTab(
+            self.make_notes_panel(
+                "10. Decision",
+                "Convert the research into a decision bucket. The score points to where to look; the memo decides what to do.",
+                "Decision: Pass / Watchlist / Deep Dive / Candidate Position\n"
+                "Reason:\n"
+                "Required next work:\n"
+                "Next review date:\n"
+                "Max position size if it becomes actionable:\n"
+                "Max loss / review trigger:\n"
+                "Correlated exposures:\n",
+            ),
+            "10. Decision",
+        )
+
+        if self.center_tabs.count() > 0:
+            self.center_tabs.setCurrentIndex(0)
+
+    def make_nested_tab_panel(self, title_text: str, hint_text: str, tabs: list[tuple[str, QWidget | None]]) -> QWidget:
+        panel = QWidget()
+        panel.setObjectName("DataPanel")
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(16, 16, 16, 16)
+        layout.setSpacing(10)
+
+        title = QLabel(title_text)
         title.setObjectName("PanelTitle")
-        hint = QLabel("Raw cache, normalized data, historical fundamentals, price history, and readiness checks.")
+        hint = QLabel(hint_text)
         hint.setObjectName("PanelHint")
+        hint.setWordWrap(True)
+
         nested_tabs = QTabWidget()
         nested_tabs.setObjectName("WorkspaceTabs")
         nested_tabs.setDocumentMode(True)
 
-        moved_any = False
-        for tab_name in BULK_DATA_TABS:
-            idx = self.find_tab_index(tab_name)
-            if idx < 0:
-                continue
-            widget = self.center_tabs.widget(idx)
-            self.center_tabs.removeTab(idx)
-            nested_tabs.addTab(widget, tab_name)
-            moved_any = True
+        for name, widget in tabs:
+            nested_tabs.addTab(widget or self.make_missing_panel(name), name)
 
-        if not moved_any:
-            return
+        layout.addWidget(title)
+        layout.addWidget(hint)
+        layout.addWidget(nested_tabs, 1)
+        return panel
 
-        data_layout.addWidget(title)
-        data_layout.addWidget(hint)
-        data_layout.addWidget(nested_tabs, 1)
-        self.center_tabs.addTab(data_details, "Data Details")
+    def make_notes_panel(self, title_text: str, hint_text: str, template_text: str) -> QWidget:
+        panel = QWidget()
+        panel.setObjectName("DataPanel")
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(10)
+
+        title = QLabel(title_text)
+        title.setObjectName("PanelTitle")
+        hint = QLabel(hint_text)
+        hint.setObjectName("PanelHint")
+        hint.setWordWrap(True)
+
+        editor = QTextEdit()
+        editor.setObjectName("Hud")
+        editor.setPlainText(template_text)
+
+        layout.addWidget(title)
+        layout.addWidget(hint)
+        layout.addWidget(editor, 1)
+        return panel
+
+    def make_missing_panel(self, name: str) -> QWidget:
+        return self.make_notes_panel(
+            name,
+            "This supporting view was not available during UI construction.",
+            "Run the app from the current branch and verify this tab is being created by the base UI.",
+        )
 
     def build_overview_tab(self, tabs) -> None:
         overview = QWidget()
