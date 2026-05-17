@@ -5,7 +5,6 @@ from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
     QFormLayout,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -21,9 +20,14 @@ from app.db.database import (
     delete_ticker,
     get_setting,
     init_db,
+    insert_api_cache_rows,
     list_tickers,
-    set_setting,
 )
+from app.services.finnhub_service import refresh_finnhub_rows
+from app.services.historical_data_service import rebuild_historical_fundamentals_for_ticker
+from app.services.market_data_service import normalize_market_data_for_ticker
+from app.services.readiness_service import calculate_model_readiness_for_ticker
+from app.services.sec_service import refresh_sec_rows
 from app.ui.main_window import (
     DARK_STYLE,
     DEFAULT_PEER_GROUPS,
@@ -157,9 +161,7 @@ class EnhancedMainWindow(MainWindow):
         for text, fn, style_name in [
             ("Add / Update Ticker", self.add_ticker_clicked, "PrimaryButton"),
             ("Run Full Pipeline", self.run_pipeline_clicked, "PrimaryButton"),
-            ("Repair Missing Data", self.repair_missing_data_clicked, "PrimaryButton"),
-            ("Rebuild SEC History", self.rebuild_history_clicked, "QuietButton"),
-            ("Refresh Price History", self.refresh_price_history_clicked, "QuietButton"),
+            ("Run Full Pipeline For All Active", self.run_all_active_pipeline_clicked, "PrimaryButton"),
             ("Save API Settings", self.save_api_settings, "QuietButton"),
             ("Delete Selected Ticker", self.delete_selected_ticker_clicked, "DangerButton"),
         ]:
@@ -172,6 +174,84 @@ class EnhancedMainWindow(MainWindow):
             action_layout.addWidget(button)
         left_layout.addWidget(action_group, 0)
         return left
+
+    def active_ticker_rows(self):
+        return [
+            row for row in list_tickers()
+            if str(row["status"] or "active").strip().lower() == "active"
+        ]
+
+    def run_all_active_pipeline_clicked(self) -> None:
+        ua = self.sec_user_agent.text().strip()
+        key = self.finnhub_api_key.text().strip()
+        if not ua or "@" not in ua:
+            QMessageBox.warning(
+                self,
+                "SEC User-Agent required",
+                "Enter your name and email in the SEC User-Agent field. It is saved only in your local database.",
+            )
+            return
+        if not key:
+            QMessageBox.warning(self, "Finnhub API key required", "Paste your Finnhub API key before running the full pipeline.")
+            return
+
+        rows = self.active_ticker_rows()
+        if not rows:
+            QMessageBox.warning(self, "No active tickers", "No active tickers were found in the watchlist.")
+            return
+
+        result = QMessageBox.question(
+            self,
+            "Run all active tickers",
+            f"Run the full SEC + Finnhub + price-history pipeline for {len(rows)} active tickers?",
+            QMessageBox.Yes | QMessageBox.No,
+            QMessageBox.No,
+        )
+        if result != QMessageBox.Yes:
+            return
+
+        self.save_api_settings()
+        successes: list[str] = []
+        failures: list[str] = []
+        total = len(rows)
+
+        for index, row in enumerate(rows, start=1):
+            ticker = str(row["ticker"] or "").strip().upper()
+            if not ticker:
+                continue
+            try:
+                self.selected_ticker = ticker
+                self.details.setText(f"Running full pipeline for all active tickers...\n\n{index}/{total}: {ticker}")
+                QApplication.processEvents()
+
+                sec_rows = refresh_sec_rows(ticker, ua, years=5)
+                insert_api_cache_rows(sec_rows, replace_source_for_ticker=True)
+                history_rows = rebuild_historical_fundamentals_for_ticker(ticker)
+                fh_rows = refresh_finnhub_rows(ticker, key)
+                insert_api_cache_rows(fh_rows, replace_source_for_ticker=True)
+                price_rows, price_warning = self.refresh_price_history_for_ticker(ticker, key)
+                normalize_market_data_for_ticker(ticker)
+                calculate_model_readiness_for_ticker(ticker)
+                successes.append(
+                    f"{ticker}: SEC {len(sec_rows)}, Finnhub {len(fh_rows)}, history years {history_rows}, price candles {price_rows}{price_warning}"
+                )
+            except Exception as exc:
+                failures.append(f"{ticker}: {exc}")
+
+        self.refresh_all_tables(self.selected_ticker)
+        lines = [
+            "Full pipeline for all active tickers complete.",
+            "",
+            f"Succeeded: {len(successes)}",
+            f"Failed: {len(failures)}",
+        ]
+        if successes:
+            lines.extend(["", "Succeeded tickers"])
+            lines.extend(successes)
+        if failures:
+            lines.extend(["", "Failed tickers"])
+            lines.extend(failures)
+        self.details.setText("\n".join(lines))
 
     def refresh_watchlist(self) -> None:
         rows = list_tickers()
