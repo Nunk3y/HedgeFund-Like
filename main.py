@@ -112,21 +112,60 @@ class StreamlinedMainWindow(MainWindow):
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "0. Idea Funnel",
-                "All-ticker screen. Use this to find which companies earn a deeper look. The gates start after this tab.",
+                "0. Sector Funnel",
+                "All-ticker screen. Start with the sector/theme you already believe in, then use the screen to find which companies earn a deeper look.",
                 [
                     ("Overview", existing_tabs.get("Overview")),
                     ("Master Watchlist", existing_tabs.get("Master Watchlist")),
                     ("Data Quality", existing_tabs.get("Data Quality")),
-                    ("Funnel Result", self.make_gate_panel("0. Idea Funnel Result", "Decide whether this ticker deserves more time.", "Screen note:\n")),
+                    ("Funnel Result", self.make_gate_panel("0. Sector Funnel Result", "Decide whether this ticker deserves more time inside this sector.", "Sector/theme I am testing:\nWhy I believe this sector should improve:\nTicker being tested:\nScreen note:\n")),
                 ],
             ),
-            "0. Idea Funnel",
+            "0. Sector Funnel",
         )
 
-        self.center_tabs.addTab(self.make_gate_panel("1. Thesis Gate", "Can I explain why this stock should go up in plain English?", "One-sentence thesis:\nWhat has to happen:\nWhat the market may be missing:\nWhy now:\nWhat would disprove this:\n"), "1. Thesis Gate")
-        self.center_tabs.addTab(self.make_gate_panel("2. Business Gate", "Do I understand how the company actually makes money?", "What the company sells:\nWho pays the company:\nWhy customers choose it:\nWhat must go right:\nBiggest business concern:\nPlain-English summary:\n"), "2. Business Gate")
-        self.center_tabs.addTab(self.make_gate_panel("3. Reality Gate", "Is this a real business today, or mostly future promise?", "Stage: Real business / Early commercial / Pre-commercial / Concept speculation\nReal product today:\nMaterial revenue today:\nCustomers paying now:\nMargins improving:\nNeeds constant funding:\nHype concern:\n"), "3. Reality Gate")
+        self.center_tabs.addTab(
+            self.make_gate_panel(
+                "1. Exposure Gate",
+                "Does this company actually give the sector exposure I want?",
+                "Sector/theme I want exposure to:\n"
+                "What part of the company is tied to that theme:\n"
+                "How direct is the exposure: Direct / Mixed / Weak\n"
+                "Reason this is not just a buzzword connection:\n"
+                "If the sector improves, how does this company benefit:\n"
+                "Main concern about exposure quality:\n",
+            ),
+            "1. Exposure Gate",
+        )
+
+        self.center_tabs.addTab(
+            self.make_gate_panel(
+                "2. Leader Gate",
+                "Is this company likely to be one of the better public-company vehicles for this sector?",
+                "Closest public companies in this sector:\n"
+                "Why this company might be a leader:\n"
+                "Why a different company might be better:\n"
+                "Does this company have a real advantage: Product / scale / customers / manufacturing / ecosystem / cost / brand\n"
+                "Leader status: Leader / Strong challenger / Average participant / Weak participant\n"
+                "What would make me choose a peer instead:\n",
+            ),
+            "2. Leader Gate",
+        )
+
+        self.center_tabs.addTab(
+            self.make_gate_panel(
+                "3. Proof Gate",
+                "Is the sector belief already showing up in this company, or is it still mostly a future story?",
+                "Real product tied to the theme:\n"
+                "Real revenue tied to the theme:\n"
+                "Customers or contracts tied to the theme:\n"
+                "Management guidance tied to the theme:\n"
+                "Margins or cash flow improving from the theme:\n"
+                "Proof level: Strong / Some proof / Early proof / Mostly story\n"
+                "Proof still needed:\n",
+            ),
+            "3. Proof Gate",
+        )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
@@ -137,7 +176,7 @@ class StreamlinedMainWindow(MainWindow):
                     ("Market Data", existing_tabs.get("Market Data")),
                     ("Score Details", existing_tabs.get("Score Details")),
                     ("Model Readiness", existing_tabs.get("Model Readiness")),
-                    ("Numbers Result", self.make_gate_panel("4. Numbers Result", "Decide whether the financials support the story.", "Revenue trend:\nMargin trend:\nFree cash flow trend:\nCash/debt situation:\nDilution/share count issue:\nData quality concern:\n")),
+                    ("Numbers Result", self.make_gate_panel("4. Numbers Result", "Decide whether the financials support the sector idea.", "Revenue trend:\nMargin trend:\nFree cash flow trend:\nCash/debt situation:\nDilution/share count issue:\nData quality concern:\n")),
                 ],
             ),
             "4. Numbers Gate",
@@ -149,20 +188,35 @@ class StreamlinedMainWindow(MainWindow):
                 "Is this better than similar companies or the ETF?",
                 [
                     ("Peer Comparison", existing_tabs.get("Peer Comparison")),
-                    ("Peer Result", self.make_gate_panel("5. Peer Result", "Decide whether this ticker is better than the available alternatives.", "Closest stronger peer:\nClosest cheaper peer:\nETF alternative:\nWhy this stock is better:\nWhy this stock may be worse:\n")),
+                    ("Peer Result", self.make_gate_panel("5. Peer Result", "Decide whether this ticker is a better sector vehicle than the available alternatives.", "Closest stronger peer:\nClosest cheaper peer:\nETF alternative:\nWhy this stock is a better sector vehicle:\nWhy this stock may be worse:\n")),
                 ],
             ),
             "5. Peer Gate",
         )
 
-        self.center_tabs.addTab(self.make_gate_panel("6. Valuation Gate", "Is the future already priced in?", "Current price:\nSimple valuation method:\nBear case:\nBase case:\nBull case:\nBase-case upside:\nBear-case downside:\nAssumptions required:\nIs the upside worth the risk:\n"), "6. Valuation Gate")
+        self.center_tabs.addTab(
+            self.make_gate_panel(
+                "6. Valuation Gate",
+                "Is the sector future already priced in?",
+                "Current price:\n"
+                "Simple valuation method:\n"
+                "Bear case:\n"
+                "Base case:\n"
+                "Bull case:\n"
+                "Base-case upside:\n"
+                "Bear-case downside:\n"
+                "Assumptions required:\n"
+                "Is the upside worth the risk:\n",
+            ),
+            "6. Valuation Gate",
+        )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
                 "7. Risk Gate",
-                "What could break the thesis?",
+                "What could make this the wrong vehicle for the sector?",
                 [
-                    ("Risk Result", self.make_gate_panel("7. Risk Result", "List the major reasons the idea might not work.", "Main concern:\nCustomer/concentration concern:\nTechnology concern:\nDebt/liquidity concern:\nDilution concern:\nRegulatory/geopolitical concern:\nWhat would disprove the thesis:\n")),
+                    ("Risk Result", self.make_gate_panel("7. Risk Result", "List the major reasons this may not be the right company to own for the sector.", "Main concern:\nCustomer/concentration concern:\nTechnology concern:\nDebt/liquidity concern:\nDilution concern:\nRegulatory/geopolitical concern:\nWhat would disprove the sector-vehicle case:\n")),
                     ("Filing Checklist", self.make_gate_panel("Filing Review Support", "Use filings only if earlier gates justify more work.", "Latest 10-K reviewed:\nLatest 10-Q reviewed:\nRecent 8-Ks reviewed:\nProxy reviewed:\nRisk factors notes:\nMD&A notes:\nDebt/liquidity notes:\nCustomer concentration notes:\nSBC/share-count notes:\n")),
                     ("API Cache", existing_tabs.get("API Cache")),
                     ("Price Trends", existing_tabs.get("Price Trends")),
@@ -172,8 +226,38 @@ class StreamlinedMainWindow(MainWindow):
             "7. Risk Gate",
         )
 
-        self.center_tabs.addTab(self.make_gate_panel("8. Decision", "Final research decision. This decides the bucket, not necessarily a buy.", "Decision: Pass / Watch / Deep Dive More / Candidate Position\nReason:\nBest gate result:\nWeakest gate result:\nNext proof needed:\nNext review trigger/date:\n", include_gate_footer=False), "8. Decision")
-        self.center_tabs.addTab(self.make_gate_panel("9. Portfolio Fit", "Only use this after Decision says Candidate Position. This answers position size and concentration.", "Time horizon:\nPortfolio role:\nTicker position %:\nMax allowed %:\nTheme exposure after purchase:\nTheme limit:\nETF alternative:\nWould I buy this again today:\nPortfolio action:\n", include_gate_footer=False), "9. Portfolio Fit")
+        self.center_tabs.addTab(
+            self.make_gate_panel(
+                "8. Decision",
+                "Final research decision. This decides the bucket, not necessarily a buy.",
+                "Decision: Pass / Watch / Deep Dive More / Candidate Position\n"
+                "Reason:\n"
+                "Best gate result:\n"
+                "Weakest gate result:\n"
+                "Next proof needed:\n"
+                "Next review trigger/date:\n",
+                include_gate_footer=False,
+            ),
+            "8. Decision",
+        )
+
+        self.center_tabs.addTab(
+            self.make_gate_panel(
+                "9. Portfolio Fit",
+                "Only use this after Decision says Candidate Position. This answers position size and concentration.",
+                "Time horizon:\n"
+                "Portfolio role:\n"
+                "Ticker position %:\n"
+                "Max allowed %:\n"
+                "Theme exposure after purchase:\n"
+                "Theme limit:\n"
+                "ETF alternative:\n"
+                "Would I buy this again today:\n"
+                "Portfolio action:\n",
+                include_gate_footer=False,
+            ),
+            "9. Portfolio Fit",
+        )
 
         if self.center_tabs.count() > 0:
             self.center_tabs.setCurrentIndex(0)
