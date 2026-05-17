@@ -1,3 +1,4 @@
+import html
 import sys
 
 from PySide6.QtCore import Qt
@@ -53,7 +54,7 @@ from app.ui.main_window import (
 
 SEC_USER_AGENT_HELP = (
     "Format: Your Name your-email@example.com. "
-    "Example: Sebastiaan Vriese savriese@gmail.com. "
+    "Example: Jane Doe jane@example.com. "
     "Required by the SEC request policy; saved locally only."
 )
 
@@ -73,6 +74,23 @@ def merged_peer_groups() -> list[str]:
         if group not in groups:
             groups.append(group)
     return groups
+
+
+def esc(value) -> str:
+    return html.escape(str(value or ""))
+
+
+def flag_class(value: str) -> str:
+    value = (value or "").upper()
+    if "GREEN" in value or "CONTINUE" in value or value.startswith("A"):
+        return "good"
+    if "YELLOW" in value or "NEEDS" in value or "WATCH" in value or "MIXED" in value or value.startswith("B"):
+        return "watch"
+    if "RED" in value or "PASS" in value or "WEAK" in value or value.startswith("D"):
+        return "bad"
+    if "PURPLE" in value or "SPEC" in value:
+        return "spec"
+    return "neutral"
 
 
 class StreamlinedMainWindow(MainWindow):
@@ -123,9 +141,7 @@ class StreamlinedMainWindow(MainWindow):
             ),
             "0. Sector Funnel",
         )
-
         self.center_tabs.addTab(self.make_auto_flag_review_panel(), "1. Flag Review")
-
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
                 "2. Numbers Gate",
@@ -152,7 +168,6 @@ class StreamlinedMainWindow(MainWindow):
             ),
             "2. Numbers Gate",
         )
-
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
                 "3. Peer Gate",
@@ -175,7 +190,6 @@ class StreamlinedMainWindow(MainWindow):
             ),
             "3. Peer Gate",
         )
-
         self.center_tabs.addTab(
             self.make_gate_panel(
                 "4. Valuation Gate",
@@ -192,7 +206,6 @@ class StreamlinedMainWindow(MainWindow):
             ),
             "4. Valuation Gate",
         )
-
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
                 "5. Risk Gate",
@@ -235,7 +248,6 @@ class StreamlinedMainWindow(MainWindow):
             ),
             "5. Risk Gate",
         )
-
         self.center_tabs.addTab(
             self.make_gate_panel(
                 "6. Sector Fit Check",
@@ -251,7 +263,6 @@ class StreamlinedMainWindow(MainWindow):
             ),
             "6. Sector Fit Check",
         )
-
         self.center_tabs.addTab(
             self.make_gate_panel(
                 "7. Decision",
@@ -266,7 +277,6 @@ class StreamlinedMainWindow(MainWindow):
             ),
             "7. Decision",
         )
-
         self.center_tabs.addTab(
             self.make_gate_panel(
                 "8. Portfolio Fit",
@@ -297,7 +307,7 @@ class StreamlinedMainWindow(MainWindow):
 
         title = QLabel("1. Flag Review")
         title.setObjectName("PanelTitle")
-        hint = QLabel("Enter the ticker you are deep diving. The app drafts this gate from local screener, score, peer, and data-quality outputs.")
+        hint = QLabel("Enter the ticker you are deep diving. The app builds a quick HUD from local screener, score, peer, and data-quality outputs.")
         hint.setObjectName("PanelHint")
         hint.setWordWrap(True)
 
@@ -314,9 +324,9 @@ class StreamlinedMainWindow(MainWindow):
 
         self.flag_review_editor = QTextEdit()
         self.flag_review_editor.setObjectName("Hud")
-        self.flag_review_editor.setPlainText(
-            "Enter a ticker above, then click Answer Flag Review.\n\n"
-            "The draft uses only local app data. If the ticker has not run through the full pipeline yet, run the pipeline first."
+        self.flag_review_editor.setReadOnly(True)
+        self.flag_review_editor.setHtml(
+            self.flag_review_empty_html("Enter a ticker above, then click Answer Flag Review. Run the full pipeline first if the ticker has no output yet.")
         )
 
         layout.addWidget(title)
@@ -333,23 +343,52 @@ class StreamlinedMainWindow(MainWindow):
             QMessageBox.warning(self, "Missing ticker", "Enter a ticker or select one from the watchlist.")
             return
         self.flag_review_ticker_input.setText(ticker)
-        self.flag_review_editor.setPlainText(self.build_flag_review_answer(ticker))
+        self.flag_review_editor.setHtml(self.build_flag_review_html(ticker))
 
-    def build_flag_review_answer(self, ticker: str) -> str:
+    def flag_review_css(self) -> str:
+        return """
+        body { background: #020814; color: #dfeeff; font-family: Arial, sans-serif; }
+        .wrap { padding: 10px; }
+        .top { border: 1px solid #2f5f96; border-radius: 14px; padding: 16px; background: #07172a; }
+        .ticker { font-size: 34px; font-weight: 800; color: white; }
+        .subtitle { color: #9fb7d8; font-size: 13px; margin-top: 4px; }
+        .grid { margin-top: 14px; }
+        .card { display: inline-block; min-width: 148px; margin: 6px; padding: 12px; border: 1px solid #274c78; border-radius: 12px; background: #0a1627; vertical-align: top; }
+        .label { color: #9fb7d8; font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; }
+        .value { color: white; font-size: 20px; font-weight: 800; margin-top: 5px; }
+        .badge { display: inline-block; padding: 6px 10px; border-radius: 999px; font-weight: 800; font-size: 12px; }
+        .good { background: #123f2b; color: #7ff0ad; border: 1px solid #2c8f58; }
+        .watch { background: #3d3214; color: #ffd36a; border: 1px solid #9b771f; }
+        .bad { background: #411a1e; color: #ff8c9a; border: 1px solid #a43d4a; }
+        .spec { background: #30214d; color: #c9a7ff; border: 1px solid #7254b6; }
+        .neutral { background: #182438; color: #b8c9e6; border: 1px solid #3b557a; }
+        .section { margin-top: 14px; padding: 14px; border: 1px solid #233d60; border-radius: 12px; background: #050d1a; }
+        .section h3 { margin: 0 0 8px 0; color: white; }
+        .text { color: #d9e8ff; line-height: 1.45; }
+        .muted { color: #9fb7d8; }
+        .row { margin: 5px 0; }
+        b { color: white; }
+        """
+
+    def flag_review_empty_html(self, message: str) -> str:
+        return f"""
+        <html><head><style>{self.flag_review_css()}</style></head>
+        <body><div class='wrap'>
+          <div class='top'>
+            <div class='ticker'>Flag Review HUD</div>
+            <div class='subtitle'>{esc(message)}</div>
+          </div>
+        </div></body></html>
+        """
+
+    def build_flag_review_html(self, ticker: str) -> str:
         ticker = ticker.strip().upper()
         watch_row = self.find_local_row(list_master_watchlist(), ticker)
         peer_row = self.find_local_row(list_peer_comparison(), ticker)
 
         if not watch_row:
-            return (
-                f"Ticker flagged: {ticker}\n"
-                "Flag/bucket from app: Not found in current local screener output\n"
-                "Reason the app flagged it: Not available yet.\n"
-                "Strongest app signal: Not available.\n"
-                "Weakest app signal: Not available.\n"
-                "Is the flag based on clean data: No / Unsure\n"
-                "What I need to verify before spending more time: Add the ticker, assign the correct peer group, then run the full pipeline.\n"
-                f"{GATE_FOOTER}"
+            return self.flag_review_empty_html(
+                f"{ticker} was not found in local screener output. Add it, assign a peer group, and run the full pipeline."
             )
 
         score_fields = [
@@ -373,31 +412,12 @@ class StreamlinedMainWindow(MainWindow):
         data_score = int(float(str(watch_row.get("Data Score", "0") or "0")))
         clean_data = "Yes" if data_flag.startswith("GREEN") or data_score >= 80 else "Unsure" if data_score >= 60 else "No"
 
-        peer_note = "No peer comparison row found."
-        if peer_row:
-            peer_note = (
-                f"Peer setup: {peer_row.get('Overall Peer Flag', '')}; "
-                f"valuation: {peer_row.get('Relative Valuation Flag', '')}; "
-                f"quality: {peer_row.get('Relative Quality Flag', '')}; "
-                f"balance: {peer_row.get('Relative Balance Flag', '')}."
-            )
-
         flag = watch_row.get("Overall Flag", "")
         rank = watch_row.get("Final Rank", "")
         action = watch_row.get("Deep Dive Action", "")
         score = watch_row.get("Score", "")
         weak_areas = watch_row.get("Missing / Weak Areas", "") or "None listed."
         next_action = watch_row.get("Next Action", "") or "Review the next gate."
-
-        reason_parts = [
-            f"Final rank is {rank} with score {score}.",
-            f"Overall flag is {flag}.",
-            f"Quality flag: {watch_row.get('Quality Flag', '')}.",
-            f"Valuation flag: {watch_row.get('Valuation Flag', '')}.",
-            f"Balance sheet flag: {watch_row.get('Balance Sheet Flag', '')}.",
-            f"Dilution flag: {watch_row.get('Dilution Flag', '')}.",
-            peer_note,
-        ]
 
         if str(rank).startswith("A") or str(action).lower().startswith("deep") or str(flag).startswith("GREEN"):
             gate_result = "Continue"
@@ -412,18 +432,70 @@ class StreamlinedMainWindow(MainWindow):
             gate_result = "Needs Proof"
             proof_line = "Continue only if the next gate explains the weak or mixed signal."
 
-        return (
-            f"Ticker flagged: {ticker}\n"
-            f"Flag/bucket from app: {rank} / {action}\n"
-            f"Reason the app flagged it: {' '.join(reason_parts)}\n"
-            f"Strongest app signal: {strongest_field} at {strongest_score}.\n"
-            f"Weakest app signal: {weakest_field} at {weakest_score}.\n"
-            f"Is the flag based on clean data: {clean_data}\n"
-            f"What I need to verify before spending more time: {next_action} Missing/weak areas: {weak_areas}\n"
-            "\n--- Gate Result ---\n"
-            f"Gate result: {gate_result}\n"
-            f"Proof needed or reason to pass for now: {proof_line}\n"
+        peer_summary = "No peer comparison row found."
+        peer_cards = ""
+        if peer_row:
+            peer_summary = esc(peer_row.get("Overall Peer Flag", ""))
+            peer_cards = f"""
+              <div class='card'><div class='label'>Peer Setup</div><div class='value'><span class='badge {flag_class(peer_row.get('Overall Peer Flag', ''))}'>{esc(peer_row.get('Overall Peer Flag', ''))}</span></div></div>
+              <div class='card'><div class='label'>Peer Valuation</div><div class='value'><span class='badge {flag_class(peer_row.get('Relative Valuation Flag', ''))}'>{esc(peer_row.get('Relative Valuation Flag', ''))}</span></div></div>
+              <div class='card'><div class='label'>Peer Quality</div><div class='value'><span class='badge {flag_class(peer_row.get('Relative Quality Flag', ''))}'>{esc(peer_row.get('Relative Quality Flag', ''))}</span></div></div>
+              <div class='card'><div class='label'>Peer Balance</div><div class='value'><span class='badge {flag_class(peer_row.get('Relative Balance Flag', ''))}'>{esc(peer_row.get('Relative Balance Flag', ''))}</span></div></div>
+            """
+
+        score_cards = "".join(
+            f"<div class='card'><div class='label'>{esc(field.replace(' Score', ''))}</div><div class='value'>{score_value}</div></div>"
+            for field, score_value in scored
         )
+
+        return f"""
+        <html><head><style>{self.flag_review_css()}</style></head>
+        <body><div class='wrap'>
+          <div class='top'>
+            <div class='ticker'>{esc(ticker)}</div>
+            <div class='subtitle'>Flag Review • local screener data only</div>
+            <div class='grid'>
+              <div class='card'><div class='label'>Bucket</div><div class='value'>{esc(rank)}</div></div>
+              <div class='card'><div class='label'>Score</div><div class='value'>{esc(score)}</div></div>
+              <div class='card'><div class='label'>Gate Result</div><div class='value'><span class='badge {flag_class(gate_result)}'>{esc(gate_result)}</span></div></div>
+              <div class='card'><div class='label'>Clean Data</div><div class='value'><span class='badge {flag_class(clean_data)}'>{esc(clean_data)}</span></div></div>
+            </div>
+          </div>
+
+          <div class='section'>
+            <h3>Core Flags</h3>
+            <div class='grid'>
+              <div class='card'><div class='label'>Overall</div><div class='value'><span class='badge {flag_class(flag)}'>{esc(flag)}</span></div></div>
+              <div class='card'><div class='label'>Quality</div><div class='value'><span class='badge {flag_class(watch_row.get('Quality Flag', ''))}'>{esc(watch_row.get('Quality Flag', ''))}</span></div></div>
+              <div class='card'><div class='label'>Valuation</div><div class='value'><span class='badge {flag_class(watch_row.get('Valuation Flag', ''))}'>{esc(watch_row.get('Valuation Flag', ''))}</span></div></div>
+              <div class='card'><div class='label'>Balance</div><div class='value'><span class='badge {flag_class(watch_row.get('Balance Sheet Flag', ''))}'>{esc(watch_row.get('Balance Sheet Flag', ''))}</span></div></div>
+              <div class='card'><div class='label'>Dilution</div><div class='value'><span class='badge {flag_class(watch_row.get('Dilution Flag', ''))}'>{esc(watch_row.get('Dilution Flag', ''))}</span></div></div>
+              <div class='card'><div class='label'>Data</div><div class='value'><span class='badge {flag_class(data_flag)}'>{esc(data_flag)}</span></div></div>
+            </div>
+          </div>
+
+          <div class='section'>
+            <h3>Score Breakdown</h3>
+            <div class='grid'>{score_cards}</div>
+            <div class='text row'><b>Strongest:</b> {esc(strongest_field)} at {strongest_score}</div>
+            <div class='text row'><b>Weakest:</b> {esc(weakest_field)} at {weakest_score}</div>
+          </div>
+
+          <div class='section'>
+            <h3>Peer Check</h3>
+            <div class='grid'>{peer_cards}</div>
+            <div class='text row'><b>Summary:</b> {peer_summary}</div>
+          </div>
+
+          <div class='section'>
+            <h3>Next Action</h3>
+            <div class='text row'><b>App action:</b> {esc(action)}</div>
+            <div class='text row'><b>Verify next:</b> {esc(next_action)}</div>
+            <div class='text row'><b>Missing / weak areas:</b> {esc(weak_areas)}</div>
+            <div class='text row'><b>Gate note:</b> {esc(proof_line)}</div>
+          </div>
+        </div></body></html>
+        """
 
     def find_local_row(self, rows: list[dict], ticker: str) -> dict | None:
         for row in rows:
