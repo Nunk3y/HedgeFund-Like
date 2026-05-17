@@ -54,55 +54,16 @@ SEC_USER_AGENT_HELP = (
     "Required by the SEC request policy; saved locally only."
 )
 
-EXTRA_PEER_GROUPS = [
-    "AI Servers / Data Center Hardware",
-    "Data Center Networking",
-    "Data Center Power / Cooling",
-    "Electrical Grid Equipment",
-    "Electrical Grid Construction",
-    "Industrial Automation / Robotics",
-    "Medical Robotics",
-    "Warehouse Robotics",
-    "EVs / Batteries / Robotics",
-    "Defense Drones",
-    "Defense / Space Hardware",
-    "Defense / Aerospace Hardware",
-    "Space Hardware",
-    "Satellite Communications",
-    "Battery / Energy Storage",
-    "Solar / Energy Hardware",
-    "Battery Materials",
-    "Solid-State Batteries",
-    "Water Infrastructure Tech",
-    "Water / Lab Equipment",
-    "3D Printing / Additive Manufacturing",
-    "Nuclear Hardware / Services",
-    "SMR / Advanced Nuclear",
-    "Advanced Nuclear / Microreactors",
-    "Nuclear Fuel / Enrichment",
-    "Uranium / Rare Earths",
-    "Nuclear Power Operator",
-    "Utility / Nuclear Power",
-    "Fusion-Adjacent / Big Tech",
-    "Fusion-Adjacent / Energy",
-    "Fusion-Adjacent / Industrial Investor",
-]
+EXTRA_PEER_GROUPS: list[str] = []
 
-WORKFLOW_TABS = [
-    "0. Idea Funnel",
-    "1. Thesis",
-    "2. Business",
-    "3. Filing Review",
-    "4. Historical Picture",
-    "5. Business Quality",
-    "6. Commercial Reality",
-    "7. Peer Comparison",
-    "8. Valuation",
-    "9. Market Behavior",
-    "10. Variant View",
-    "11. Decision",
-    "12. Portfolio Management",
-]
+GATE_FOOTER = (
+    "\n\n--- Gate Result ---\n"
+    "Gate result: Continue / Needs Proof / Pass For Now\n"
+    "Continue: move to the next gate.\n"
+    "Needs Proof: write the proof needed before moving on.\n"
+    "Pass For Now: place this ticker aside and review another idea.\n"
+    "Proof needed or reason to pass for now:\n"
+)
 
 
 def merged_peer_groups() -> list[str]:
@@ -152,286 +113,67 @@ class StreamlinedMainWindow(MainWindow):
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
                 "0. Idea Funnel",
-                "This is the all-ticker screening area. Use it to find which company deserves a deep dive. The single-company workflow starts after this tab.",
+                "All-ticker screen. Use this to find which companies earn a deeper look. The gates start after this tab.",
                 [
                     ("Overview", existing_tabs.get("Overview")),
                     ("Master Watchlist", existing_tabs.get("Master Watchlist")),
                     ("Data Quality", existing_tabs.get("Data Quality")),
+                    ("Funnel Result", self.make_gate_panel("0. Idea Funnel Result", "Decide whether this ticker deserves more time.", "Screen note:\n")),
                 ],
             ),
             "0. Idea Funnel",
         )
 
-        self.center_tabs.addTab(
-            self.make_notes_panel(
-                "1. Thesis",
-                "Start here after selecting one company from the Idea Funnel. State why you think the stock can go up before doing the deeper work.",
-                "One-sentence thesis:\n"
-                "Why I think this stock will go up:\n"
-                "What has to happen for the thesis to work:\n"
-                "What the market may be missing:\n"
-                "Why now:\n"
-                "What would make me stop researching it:\n"
-                "What would prove the thesis wrong:\n",
-            ),
-            "1. Thesis",
-        )
-
-        self.center_tabs.addTab(
-            self.make_notes_panel(
-                "2. Business",
-                "Start with the business, not the stock price.",
-                "What does the company sell?\n"
-                "Who are the customers?\n"
-                "Why do customers choose it?\n"
-                "Recurring, cyclical, regulated, or one-time demand?\n"
-                "Does the company have pricing power?\n"
-                "Key cost drivers:\n"
-                "Main competitors:\n"
-                "Obsolescence risk:\n"
-                "What must go right for the company to keep growing?\n"
-                "Five-sentence business explanation:\n",
-            ),
-            "2. Business",
-        )
+        self.center_tabs.addTab(self.make_gate_panel("1. Thesis Gate", "Can I explain why this stock should go up in plain English?", "One-sentence thesis:\nWhat has to happen:\nWhat the market may be missing:\nWhy now:\nWhat would disprove this:\n"), "1. Thesis Gate")
+        self.center_tabs.addTab(self.make_gate_panel("2. Business Gate", "Do I understand how the company actually makes money?", "What the company sells:\nWho pays the company:\nWhy customers choose it:\nWhat must go right:\nBiggest business concern:\nPlain-English summary:\n"), "2. Business Gate")
+        self.center_tabs.addTab(self.make_gate_panel("3. Reality Gate", "Is this a real business today, or mostly future promise?", "Stage: Real business / Early commercial / Pre-commercial / Concept speculation\nReal product today:\nMaterial revenue today:\nCustomers paying now:\nMargins improving:\nNeeds constant funding:\nHype concern:\n"), "3. Reality Gate")
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "3. Filing Review",
-                "Use filings as the source of truth. Read what changed, not only the numbers.",
-                [
-                    (
-                        "Checklist",
-                        self.make_notes_panel(
-                            "Filing checklist",
-                            "Track the filing work required before a serious thesis.",
-                            "Latest 10-K reviewed?\n"
-                            "Latest 10-Q reviewed?\n"
-                            "Recent 8-Ks reviewed?\n"
-                            "Proxy reviewed?\n"
-                            "Earnings call reviewed?\n"
-                            "Investor presentation reviewed as management marketing?\n"
-                            "Risk factors notes:\n"
-                            "MD&A notes:\n"
-                            "Financial statements / notes:\n"
-                            "Liquidity / debt maturities:\n"
-                            "Segment reporting:\n"
-                            "Customer concentration:\n"
-                            "Legal proceedings:\n"
-                            "Related-party transactions:\n"
-                            "SBC / share-count changes:\n"
-                            "Executive compensation / insider ownership:\n"
-                        ),
-                    ),
-                    ("API Cache", existing_tabs.get("API Cache")),
-                ],
-            ),
-            "3. Filing Review",
-        )
-
-        self.center_tabs.addTab(
-            self.make_nested_tab_panel(
-                "4. Historical Picture",
-                "Build the 3-5 year operating picture and look for trend changes.",
+                "4. Numbers Gate",
+                "Are the numbers improving enough to keep going?",
                 [
                     ("Historical Fundamentals", existing_tabs.get("Historical Fundamentals")),
                     ("Market Data", existing_tabs.get("Market Data")),
-                    (
-                        "Trend Notes",
-                        self.make_notes_panel(
-                            "Historical trend notes",
-                            "Summarize the operating history in plain English.",
-                            "Revenue trend:\n"
-                            "Gross margin trend:\n"
-                            "Operating margin trend:\n"
-                            "Net income trend:\n"
-                            "Operating cash flow trend:\n"
-                            "Capex / FCF trend:\n"
-                            "Cash / debt / current ratio trend:\n"
-                            "Share count / dilution trend:\n"
-                            "SBC as % of revenue:\n"
-                            "ROIC, if meaningful:\n"
-                            "Main concern from history:\n",
-                        ),
-                    ),
-                ],
-            ),
-            "4. Historical Picture",
-        )
-
-        self.center_tabs.addTab(
-            self.make_nested_tab_panel(
-                "5. Business Quality",
-                "Judge whether the business is durable, improving, fragile, or deteriorating.",
-                [
                     ("Score Details", existing_tabs.get("Score Details")),
                     ("Model Readiness", existing_tabs.get("Model Readiness")),
-                    (
-                        "Quality Notes",
-                        self.make_notes_panel(
-                            "Business quality notes",
-                            "Add qualitative judgment that the score alone cannot capture.",
-                            "Durable revenue growth?\n"
-                            "High or improving gross margins?\n"
-                            "Positive operating leverage?\n"
-                            "Positive free cash flow?\n"
-                            "Strong balance sheet?\n"
-                            "Low dilution?\n"
-                            "Pricing power?\n"
-                            "Recurring/repeat demand?\n"
-                            "Competitive advantage:\n"
-                            "Management/capital allocation notes:\n"
-                            "Main quality weakness:\n",
-                        ),
-                    ),
+                    ("Numbers Result", self.make_gate_panel("4. Numbers Result", "Decide whether the financials support the story.", "Revenue trend:\nMargin trend:\nFree cash flow trend:\nCash/debt situation:\nDilution/share count issue:\nData quality concern:\n")),
                 ],
             ),
-            "5. Business Quality",
-        )
-
-        self.center_tabs.addTab(
-            self.make_notes_panel(
-                "6. Commercial Reality",
-                "Use this especially for future-tech and physical-product companies.",
-                "Commercial reality stage: Real business / Early commercial / Pre-commercial / Concept-speculation\n"
-                "Is there a real product today?\n"
-                "Is revenue material or mostly future promises?\n"
-                "Are customers paying now?\n"
-                "Repeat buyers or one-time pilots?\n"
-                "Are gross margins positive and improving?\n"
-                "Does the company need constant capital raises?\n"
-                "Is the technology proven outside demos?\n"
-                "Regulatory approval risk:\n"
-                "Infrastructure dependency:\n"
-                "Commercialization timeline:\n"
-                "Can larger competitors copy/outspend it?\n"
-                "Owns manufacturing capacity or depends on partners?\n"
-                "Unit economics proven at scale?\n"
-                "Do partnerships produce meaningful revenue or just headlines?\n"
-                "Position-size implication:\n",
-            ),
-            "6. Commercial Reality",
-        )
-
-        self.center_tabs.addTab(
-            existing_tabs.get("Peer Comparison") or self.make_missing_panel("Peer Comparison"),
-            "7. Peer Comparison",
-        )
-
-        self.center_tabs.addTab(
-            self.make_notes_panel(
-                "8. Valuation",
-                "Build bear/base/bull valuation and decide what assumptions must be true.",
-                "Primary method: EV/Revenue / EV/FCF / P/E / DCF / Sum-of-the-parts\n"
-                "ETF alternative:\n"
-                "EV/Revenue:\n"
-                "EV/FCF:\n"
-                "P/S:\n"
-                "P/E:\n"
-                "Peer median:\n"
-                "Bear scenario: probability / value / reason\n"
-                "Base scenario: probability / value / reason\n"
-                "Bull scenario: probability / value / reason\n"
-                "Expected value:\n"
-                "Current price:\n"
-                "Base-case upside:\n"
-                "Bear-case downside:\n"
-                "Is downside survivable?\n"
-                "Current share count:\n"
-                "Expected future share count:\n"
-                "Upside before dilution:\n"
-                "Upside after dilution:\n"
-                "What assumptions must be true for the stock to be attractive?\n",
-            ),
-            "8. Valuation",
+            "4. Numbers Gate",
         )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "9. Market Behavior",
-                "Use price behavior for timing and risk awareness. It is evidence, not the thesis.",
+                "5. Peer Gate",
+                "Is this better than similar companies or the ETF?",
                 [
-                    ("Price Trends", existing_tabs.get("Price Trends")),
-                    ("Price History", existing_tabs.get("Price History")),
-                    (
-                        "Market Notes",
-                        self.make_notes_panel(
-                            "Market behavior notes",
-                            "Separate entry timing from the actual company thesis.",
-                            "1M / 3M / 6M / 1Y return interpretation:\n"
-                            "Momentum flag interpretation:\n"
-                            "Drawdown interpretation:\n"
-                            "Volatility / position-size implication:\n"
-                            "What would price action confirm or invalidate?\n",
-                        ),
-                    ),
+                    ("Peer Comparison", existing_tabs.get("Peer Comparison")),
+                    ("Peer Result", self.make_gate_panel("5. Peer Result", "Decide whether this ticker is better than the available alternatives.", "Closest stronger peer:\nClosest cheaper peer:\nETF alternative:\nWhy this stock is better:\nWhy this stock may be worse:\n")),
                 ],
             ),
-            "9. Market Behavior",
+            "5. Peer Gate",
         )
 
-        self.center_tabs.addTab(
-            self.make_notes_panel(
-                "10. Variant View",
-                "Write why the market may be wrong and what would force a reprice.",
-                "Consensus view:\n"
-                "My variant view:\n"
-                "Evidence:\n"
-                "Catalyst:\n"
-                "Timeline:\n"
-                "Kill criteria / what proves me wrong:\n"
-                "Bad-thesis check: Am I relying on hype, TAM, partnerships, price targets, or 'it could 10x'?\n"
-            ),
-            "10. Variant View",
-        )
+        self.center_tabs.addTab(self.make_gate_panel("6. Valuation Gate", "Is the future already priced in?", "Current price:\nSimple valuation method:\nBear case:\nBase case:\nBull case:\nBase-case upside:\nBear-case downside:\nAssumptions required:\nIs the upside worth the risk:\n"), "6. Valuation Gate")
 
         self.center_tabs.addTab(
-            self.make_notes_panel(
-                "11. Decision",
-                "Convert the research into a decision bucket. The score points to where to look; the memo decides what to do.",
-                "Decision: Pass / Watchlist / Deep Dive / Candidate Position\n"
-                "Reason:\n"
-                "Required next work:\n"
-                "Next review trigger/date:\n"
-                "Pre-mortem: This investment failed because...\n"
-                "Max position size if it becomes actionable:\n"
-                "Max loss / review trigger:\n"
-                "Correlated exposures:\n"
-                "Why this stock instead of the ETF alternative?\n"
+            self.make_nested_tab_panel(
+                "7. Risk Gate",
+                "What could break the thesis?",
+                [
+                    ("Risk Result", self.make_gate_panel("7. Risk Result", "List the major reasons the idea might not work.", "Main concern:\nCustomer/concentration concern:\nTechnology concern:\nDebt/liquidity concern:\nDilution concern:\nRegulatory/geopolitical concern:\nWhat would disprove the thesis:\n")),
+                    ("Filing Checklist", self.make_gate_panel("Filing Review Support", "Use filings only if earlier gates justify more work.", "Latest 10-K reviewed:\nLatest 10-Q reviewed:\nRecent 8-Ks reviewed:\nProxy reviewed:\nRisk factors notes:\nMD&A notes:\nDebt/liquidity notes:\nCustomer concentration notes:\nSBC/share-count notes:\n")),
+                    ("API Cache", existing_tabs.get("API Cache")),
+                    ("Price Trends", existing_tabs.get("Price Trends")),
+                    ("Price History", existing_tabs.get("Price History")),
+                ],
             ),
-            "11. Decision",
+            "7. Risk Gate",
         )
 
-        self.center_tabs.addTab(
-            self.make_notes_panel(
-                "12. Portfolio Management",
-                "Check whether this stock improves the portfolio after time horizon, role, risk, concentration, sizing, taxes, and ETF alternatives.",
-                "Portfolio date:\n"
-                "Total portfolio value:\n"
-                "Time horizon for this position: 3 months / 1-2 years / 3-5 years\n"
-                "Portfolio role: Core / researched individual / speculative future-tech\n"
-                "Core ETF / diversified funds target %:\n"
-                "Core ETF / diversified funds actual %:\n"
-                "Researched individual stocks target %:\n"
-                "Researched individual stocks actual %:\n"
-                "Speculative future-tech target %:\n"
-                "Speculative future-tech actual %:\n"
-                "Cash reserve separate? Months covered:\n"
-                "Ticker position %:\n"
-                "Max allowed %:\n"
-                "Theme:\n"
-                "Theme exposure after purchase:\n"
-                "Theme limit:\n"
-                "Largest position:\n"
-                "Largest theme:\n"
-                "Total speculative exposure:\n"
-                "Does this stock still beat the ETF alternative?\n"
-                "Would I buy this position again today?\n"
-                "Tax issue before buying/selling?\n"
-                "Portfolio action: Add / Hold / Reduce / Sell / Rebalance / Do nothing\n",
-            ),
-            "12. Portfolio Management",
-        )
+        self.center_tabs.addTab(self.make_gate_panel("8. Decision", "Final research decision. This decides the bucket, not necessarily a buy.", "Decision: Pass / Watch / Deep Dive More / Candidate Position\nReason:\nBest gate result:\nWeakest gate result:\nNext proof needed:\nNext review trigger/date:\n", include_gate_footer=False), "8. Decision")
+        self.center_tabs.addTab(self.make_gate_panel("9. Portfolio Fit", "Only use this after Decision says Candidate Position. This answers position size and concentration.", "Time horizon:\nPortfolio role:\nTicker position %:\nMax allowed %:\nTheme exposure after purchase:\nTheme limit:\nETF alternative:\nWould I buy this again today:\nPortfolio action:\n", include_gate_footer=False), "9. Portfolio Fit")
 
         if self.center_tabs.count() > 0:
             self.center_tabs.setCurrentIndex(0)
@@ -460,6 +202,10 @@ class StreamlinedMainWindow(MainWindow):
         layout.addWidget(hint)
         layout.addWidget(nested_tabs, 1)
         return panel
+
+    def make_gate_panel(self, title_text: str, hint_text: str, template_text: str, include_gate_footer: bool = True) -> QWidget:
+        body = template_text + (GATE_FOOTER if include_gate_footer else "")
+        return self.make_notes_panel(title_text, hint_text, body)
 
     def make_notes_panel(self, title_text: str, hint_text: str, template_text: str) -> QWidget:
         panel = QWidget()
