@@ -89,19 +89,19 @@ EXTRA_PEER_GROUPS = [
 ]
 
 WORKFLOW_TABS = [
+    "0. Idea Funnel",
     "1. Mandate",
-    "2. First-Pass Screen",
-    "3. Business",
-    "4. Filing Review",
-    "5. Historical Picture",
-    "6. Business Quality",
-    "7. Commercial Reality",
-    "8. Peer Comparison",
-    "9. Valuation",
-    "10. Market Behavior",
-    "11. Variant View",
-    "12. Decision",
-    "13. Portfolio Management",
+    "2. Business",
+    "3. Filing Review",
+    "4. Historical Picture",
+    "5. Business Quality",
+    "6. Commercial Reality",
+    "7. Peer Comparison",
+    "8. Valuation",
+    "9. Market Behavior",
+    "10. Variant View",
+    "11. Decision",
+    "12. Portfolio Management",
 ]
 
 
@@ -150,9 +150,22 @@ class StreamlinedMainWindow(MainWindow):
             self.center_tabs.removeTab(0)
 
         self.center_tabs.addTab(
+            self.make_nested_tab_panel(
+                "0. Idea Funnel",
+                "This is the all-ticker screening area. Use it to find which company deserves a deep dive. The single-company workflow starts after this tab.",
+                [
+                    ("Overview", existing_tabs.get("Overview")),
+                    ("Master Watchlist", existing_tabs.get("Master Watchlist")),
+                    ("Data Quality", existing_tabs.get("Data Quality")),
+                ],
+            ),
+            "0. Idea Funnel",
+        )
+
+        self.center_tabs.addTab(
             self.make_notes_panel(
                 "1. Mandate",
-                "Define the job of the stock before analyzing it.",
+                "Start here after selecting one company from the Idea Funnel. Define the job of the stock before analyzing it.",
                 "Mandate type: Long-term compounder / GARP / Turnaround / Cyclical recovery / Special situation / Deep value / Speculative catalyst / Peer-relative / Future-tech option\n"
                 "Time horizon: 3 months / 1-2 years / 3-5 years\n"
                 "Why this belongs on the watchlist:\n"
@@ -164,21 +177,8 @@ class StreamlinedMainWindow(MainWindow):
         )
 
         self.center_tabs.addTab(
-            self.make_nested_tab_panel(
-                "2. First-Pass Screen",
-                "Use the app output to decide whether the ticker deserves deeper work. A score is not a buy signal.",
-                [
-                    ("Overview", existing_tabs.get("Overview")),
-                    ("Master Watchlist", existing_tabs.get("Master Watchlist")),
-                    ("Data Quality", existing_tabs.get("Data Quality")),
-                ],
-            ),
-            "2. First-Pass Screen",
-        )
-
-        self.center_tabs.addTab(
             self.make_notes_panel(
-                "3. Business",
+                "2. Business",
                 "Start with the business, not the stock price.",
                 "What does the company sell?\n"
                 "Who are the customers?\n"
@@ -191,12 +191,12 @@ class StreamlinedMainWindow(MainWindow):
                 "What must go right for the company to keep growing?\n"
                 "Five-sentence business explanation:\n",
             ),
-            "3. Business",
+            "2. Business",
         )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "4. Filing Review",
+                "3. Filing Review",
                 "Use filings as the source of truth. Read what changed, not only the numbers.",
                 [
                     (
@@ -225,12 +225,12 @@ class StreamlinedMainWindow(MainWindow):
                     ("API Cache", existing_tabs.get("API Cache")),
                 ],
             ),
-            "4. Filing Review",
+            "3. Filing Review",
         )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "5. Historical Picture",
+                "4. Historical Picture",
                 "Build the 3-5 year operating picture and look for trend changes.",
                 [
                     ("Historical Fundamentals", existing_tabs.get("Historical Fundamentals")),
@@ -255,12 +255,12 @@ class StreamlinedMainWindow(MainWindow):
                     ),
                 ],
             ),
-            "5. Historical Picture",
+            "4. Historical Picture",
         )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "6. Business Quality",
+                "5. Business Quality",
                 "Judge whether the business is durable, improving, fragile, or deteriorating.",
                 [
                     ("Score Details", existing_tabs.get("Score Details")),
@@ -285,12 +285,12 @@ class StreamlinedMainWindow(MainWindow):
                     ),
                 ],
             ),
-            "6. Business Quality",
+            "5. Business Quality",
         )
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "7. Commercial Reality",
+                "6. Commercial Reality",
                 "Use this especially for future-tech and physical-product companies.",
                 "Commercial reality stage: Real business / Early commercial / Pre-commercial / Concept-speculation\n"
                 "Is there a real product today?\n"
@@ -309,17 +309,17 @@ class StreamlinedMainWindow(MainWindow):
                 "Do partnerships produce meaningful revenue or just headlines?\n"
                 "Position-size implication:\n",
             ),
-            "7. Commercial Reality",
+            "6. Commercial Reality",
         )
 
         self.center_tabs.addTab(
             existing_tabs.get("Peer Comparison") or self.make_missing_panel("Peer Comparison"),
-            "8. Peer Comparison",
+            "7. Peer Comparison",
         )
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "9. Valuation",
+                "8. Valuation",
                 "Build bear/base/bull valuation and decide what assumptions must be true.",
                 "Primary method: EV/Revenue / EV/FCF / P/E / DCF / Sum-of-the-parts\n"
                 "ETF alternative:\n"
@@ -342,12 +342,12 @@ class StreamlinedMainWindow(MainWindow):
                 "Upside after dilution:\n"
                 "What assumptions must be true for the stock to be attractive?\n",
             ),
-            "9. Valuation",
+            "8. Valuation",
         )
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
-                "10. Market Behavior",
+                "9. Market Behavior",
                 "Use price behavior for timing and risk awareness. It is evidence, not the thesis.",
                 [
                     ("Price Trends", existing_tabs.get("Price Trends")),
@@ -366,12 +366,12 @@ class StreamlinedMainWindow(MainWindow):
                     ),
                 ],
             ),
-            "10. Market Behavior",
+            "9. Market Behavior",
         )
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "11. Variant View",
+                "10. Variant View",
                 "Write why the market may be wrong and what would force a reprice.",
                 "Consensus view:\n"
                 "My variant view:\n"
@@ -381,12 +381,12 @@ class StreamlinedMainWindow(MainWindow):
                 "Kill criteria / what proves me wrong:\n"
                 "Bad-thesis check: Am I relying on hype, TAM, partnerships, price targets, or 'it could 10x'?\n"
             ),
-            "11. Variant View",
+            "10. Variant View",
         )
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "12. Decision",
+                "11. Decision",
                 "Convert the research into a decision bucket. The score points to where to look; the memo decides what to do.",
                 "Decision: Pass / Watchlist / Deep Dive / Candidate Position\n"
                 "Reason:\n"
@@ -398,12 +398,12 @@ class StreamlinedMainWindow(MainWindow):
                 "Correlated exposures:\n"
                 "Why this stock instead of the ETF alternative?\n"
             ),
-            "12. Decision",
+            "11. Decision",
         )
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "13. Portfolio Management",
+                "12. Portfolio Management",
                 "Check whether this stock improves the portfolio after risk, concentration, sizing, taxes, and ETF alternatives.",
                 "Portfolio date:\n"
                 "Total portfolio value:\n"
@@ -427,7 +427,7 @@ class StreamlinedMainWindow(MainWindow):
                 "Tax issue before buying/selling?\n"
                 "Portfolio action: Add / Hold / Reduce / Sell / Rebalance / Do nothing\n",
             ),
-            "13. Portfolio Management",
+            "12. Portfolio Management",
         )
 
         if self.center_tabs.count() > 0:
