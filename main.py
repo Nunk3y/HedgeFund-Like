@@ -5,12 +5,15 @@ from PySide6.QtWidgets import (
     QApplication,
     QComboBox,
     QFormLayout,
+    QGridLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
+    QTextEdit,
     QVBoxLayout,
     QWidget,
 )
@@ -41,6 +44,7 @@ from app.ui.main_window import (
     DEFAULT_SEC_USER_AGENT,
     MainWindow,
     apply_windows_dark_title_bar,
+    make_metric_card,
     polish_table,
 )
 
@@ -94,6 +98,82 @@ def merged_peer_groups() -> list[str]:
 
 
 class StreamlinedMainWindow(MainWindow):
+    def build_overview_tab(self, tabs) -> None:
+        overview = QWidget()
+        layout = QVBoxLayout(overview)
+        layout.setContentsMargins(22, 24, 22, 22)
+        layout.setSpacing(20)
+
+        summary = QWidget()
+        summary.setObjectName("PreviewShell")
+        summary_layout = QVBoxLayout(summary)
+        summary_layout.setContentsMargins(38, 34, 38, 34)
+        summary_layout.setSpacing(18)
+
+        eyebrow = QLabel("LOCAL STOCK SCREENER")
+        eyebrow.setObjectName("HeroEyebrow")
+        eyebrow.setAlignment(Qt.AlignCenter)
+
+        title = QLabel("Overview")
+        title.setObjectName("HeroTitle")
+        title.setAlignment(Qt.AlignCenter)
+        title.setWordWrap(True)
+
+        subtitle = QLabel(
+            "Local watchlist, SEC data, Finnhub data, price history, peer groups, and scoring status."
+        )
+        subtitle.setObjectName("HeroSubtitle")
+        subtitle.setAlignment(Qt.AlignCenter)
+        subtitle.setWordWrap(True)
+
+        info_row = QHBoxLayout()
+        info_row.setSpacing(10)
+        info_row.addStretch()
+        for text in ["LOCAL SQLITE", "SEC + FINNHUB", "SCORING FLAGS"]:
+            signal = QLabel(text)
+            signal.setObjectName("SignalPill")
+            info_row.addWidget(signal)
+        info_row.addStretch()
+
+        summary_layout.addWidget(eyebrow)
+        summary_layout.addWidget(title)
+        summary_layout.addWidget(subtitle)
+        summary_layout.addLayout(info_row)
+
+        metric_grid = QGridLayout()
+        metric_grid.setSpacing(14)
+        card, self.metric_total, self.metric_total_sub = make_metric_card("Universe", "0", "tracked tickers")
+        metric_grid.addWidget(card, 0, 0)
+        card, self.metric_deep_dive, self.metric_deep_dive_sub = make_metric_card("Deep Dive", "0", "green candidates")
+        metric_grid.addWidget(card, 0, 1)
+        card, self.metric_watch, self.metric_watch_sub = make_metric_card("Watch", "0", "yellow names")
+        metric_grid.addWidget(card, 0, 2)
+        card, self.metric_data, self.metric_data_sub = make_metric_card("Needs Data", "0", "gray names")
+        metric_grid.addWidget(card, 0, 3)
+        summary_layout.addLayout(metric_grid)
+        layout.addWidget(summary)
+
+        dashboard = QWidget()
+        dashboard.setObjectName("DashboardCard")
+        dashboard_layout = QVBoxLayout(dashboard)
+        dashboard_layout.setContentsMargins(20, 20, 20, 20)
+        dashboard_layout.setSpacing(12)
+
+        dash_title = QLabel("Status Board")
+        dash_title.setObjectName("PanelTitle")
+        dash_hint = QLabel("Summary of the current local database and screening results.")
+        dash_hint.setObjectName("PanelHint")
+
+        self.hud = QTextEdit()
+        self.hud.setObjectName("Hud")
+        self.hud.setReadOnly(True)
+
+        dashboard_layout.addWidget(dash_title)
+        dashboard_layout.addWidget(dash_hint)
+        dashboard_layout.addWidget(self.hud, 1)
+        layout.addWidget(dashboard, 1)
+        tabs.addTab(overview, "Overview")
+
     def build_left_panel(self) -> QWidget:
         left = QWidget()
         left.setObjectName("ControlPanel")
