@@ -109,8 +109,14 @@ def merged_peer_groups() -> list[str]:
 class StreamlinedMainWindow(MainWindow):
     def __init__(self) -> None:
         super().__init__()
+        self.hide_top_nav_buttons()
         self.group_bulk_data_tabs()
         self.update_active_tab_header()
+
+    def hide_top_nav_buttons(self) -> None:
+        for button in self.findChildren(QPushButton):
+            if button.objectName() == "NavButton":
+                button.hide()
 
     def group_bulk_data_tabs(self) -> None:
         if not hasattr(self, "center_tabs"):
