@@ -2,16 +2,20 @@
 
 ## Purpose
 
-HedgeFund-Like is a local-first desktop stock screener and research assistant for organizing a watchlist, pulling public-company data, comparing companies against peers, and deciding which names deserve deeper manual research.
+HedgeFund-Like is a local-first desktop stock screener and research workflow app for organizing a watchlist, pulling public-company data, comparing companies against peers, and building a repeatable investment research process.
 
-The app is not a buy/sell signal. It is a first-pass analyst tool.
+The app is not a buy/sell signal. It is a research system.
 
 The app should help answer:
 
-1. Is the ticker data complete enough to trust?
-2. How does the company score on quality, valuation, balance sheet, dilution, FCF, price trend, and peer comparison?
-3. Which names deserve deeper research?
-4. Which names should be watched, passed, or fixed because data is weak?
+1. What is the job of this stock in the portfolio?
+2. Is the data complete enough to trust?
+3. How does the company score on quality, valuation, balance sheet, dilution, FCF, market behavior, and peer comparison?
+4. What does the business actually do?
+5. What do the SEC filings say?
+6. What is the variant view?
+7. What would prove the thesis wrong?
+8. Should the ticker be passed, watched, deep-dived, or treated as a candidate position?
 
 ## Current App Status
 
@@ -58,19 +62,45 @@ Both files are local-only and ignored by Git through `*.db` rules.
 
 Do not commit database files, API keys, caches, logs, virtual environments, or generated build outputs.
 
-## Current Workflow
+## Target Workflow
 
-The UI workflow should follow the Research Guide order:
+The app should become a tabbed version of the Research Guide's 10-step workflow.
 
-1. **Overview**
-2. **Master Watchlist**
-3. **Score Details**
-4. **Data Quality**
-5. **Peer Comparison**
-6. **Data Details**
-7. **Research Guide**
+The primary top-level workflow should be:
 
-`Data Details` groups the bulk/raw tables:
+1. **Mandate**
+2. **First-Pass Screen**
+3. **Business**
+4. **Filing Review**
+5. **Historical Picture**
+6. **Business Quality**
+7. **Peer Comparison**
+8. **Market Behavior**
+9. **Variant View**
+10. **Decision**
+
+This is the target because it turns the app into a complete repeatable research workflow instead of only a data screener.
+
+## How Existing Views Should Map Into The 10-Step Workflow
+
+| Research step | App support / needed UI |
+|---|---|
+| 1. Mandate | Add fields for stock type, time horizon, reason for tracking, and portfolio role |
+| 2. First-Pass Screen | Use Master Watchlist, readiness, score, overall flag, data confidence, market cap, revenue, FCF, cash, debt, dilution, momentum, drawdown, volatility |
+| 3. Business | Add memo fields for what the company sells, customers, demand type, competitors, cost drivers, obsolescence risk, and price-maker/price-taker judgment |
+| 4. Filing Review | Add filing checklist for 10-K, 10-Q, 8-K, proxy, MD&A, risk factors, liquidity, debt, segments, customer concentration, legal proceedings |
+| 5. Historical Picture | Use Historical Fundamentals and add notes for 3-5 year trends |
+| 6. Business Quality | Use Score Details and add qualitative quality notes |
+| 7. Peer Comparison | Use Peer Comparison and peer valuation/quality notes |
+| 8. Market Behavior | Use Price Trends and Price History |
+| 9. Variant View | Add fields for consensus view, variant view, evidence, catalyst, timeline, and kill criteria |
+| 10. Decision | Add final bucket: Pass / Watchlist / Deep Dive / Candidate Position, plus reason and next review date |
+
+## Supporting Data Details
+
+Raw/bulk data should not be the primary workflow. It should be available as supporting detail inside the relevant research steps or under a secondary data/debug area.
+
+Current bulk/raw views:
 
 1. Historical Fundamentals
 2. Price Trends
@@ -78,6 +108,10 @@ The UI workflow should follow the Research Guide order:
 4. API Cache
 5. Model Readiness
 6. Market Data
+
+The app should keep these available, but they should support the 10-step research flow instead of dominating the main navigation.
+
+## Active Action Panel
 
 The left-side action panel should only show:
 
@@ -113,8 +147,8 @@ Sebastiaan Vriese savriese@gmail.com
 
 4. Enter Finnhub API key.
 5. Run **Run Full Pipeline** for the selected ticker, or **Run Full Pipeline For All Active** for the whole active watchlist.
-6. Review the ticker through the workflow tabs in order.
-7. Use the Research Guide before deciding whether a ticker deserves a full manual memo.
+6. Work through the 10 research workflow tabs in order.
+7. Use the final Decision step before treating a ticker as actionable.
 
 ## Pipeline Scope
 
@@ -138,7 +172,8 @@ The goal is to avoid separate manual repair/rebuild/refresh buttons unless they 
 - Avoid unused wrapper UI files.
 - Avoid stacking messy one-off UI files.
 - Make the visible workflow follow the Research Guide.
-- Keep raw/bulk data views grouped under `Data Details`.
+- Turn the 10-step Research Guide into the primary tab workflow.
+- Keep raw/bulk data views secondary to the research workflow.
 - Keep readable screening views separate from raw data tables.
 - Do not fake missing financial data.
 - If data is partial, stale, unavailable, or currency-distorted, mark it clearly.
@@ -146,7 +181,19 @@ The goal is to avoid separate manual repair/rebuild/refresh buttons unless they 
 
 ## Still Needs To Be Done
 
-### 1. Clean code structure
+### 1. Convert the UI to the 10-step workflow
+
+Needed:
+
+- Replace the current top-level screening/data tabs with the 10 Research Guide steps.
+- Embed existing screening/data views inside the correct research steps.
+- Add editable local memo fields for steps that require judgment.
+- Save per-ticker notes and decisions locally in `tech_screener.db`.
+- Add final decision bucket: Pass / Watchlist / Deep Dive / Candidate Position.
+- Add next review date.
+- Add kill criteria and catalyst tracking.
+
+### 2. Clean code structure
 
 The active app currently uses a streamlined launch path in `main.py` that subclasses the base UI. This works, but the long-term cleanup should be to move the streamlined UI code into a proper module and remove dead/unused UI paths.
 
@@ -158,7 +205,7 @@ Needed:
 - Keep `main.py` small: import the app class and launch it.
 - Confirm there are no unused wrapper files.
 
-### 2. UI polish
+### 3. UI polish
 
 Needed:
 
@@ -171,7 +218,7 @@ Needed:
 - Improve error messages when API pulls fail.
 - Make confirmation dialogs readable in dark mode without breaking launch.
 
-### 3. Data quality and transparency
+### 4. Data quality and transparency
 
 Needed:
 
@@ -182,7 +229,7 @@ Needed:
 - More detailed data-quality summary by ticker.
 - More explicit warnings for non-USD SEC units and ADR/foreign issuer issues.
 
-### 4. Historical fundamentals
+### 5. Historical fundamentals
 
 Partially added: `historical_fundamentals` is rebuilt from SEC annual companyfacts rows.
 
@@ -193,7 +240,7 @@ Still needed:
 - Drill-downs showing which SEC concept supplied each historical value.
 - Stronger restatement/duplicate annual fact handling.
 
-### 5. Historical price data
+### 6. Historical price data
 
 Partially added: daily price candles are stored in `price_history`, and derived metrics are stored in `price_metrics`.
 
@@ -204,7 +251,7 @@ Still needed:
 - More configurable trend windows.
 - Optional second fallback provider if Finnhub and Yahoo are unavailable or rate-limited.
 
-### 6. Foreign issuer handling
+### 7. Foreign issuer handling
 
 Needed:
 
@@ -214,7 +261,7 @@ Needed:
 - ADR/share-count conversion awareness.
 - Better disclosure notes for partial SBC, R&D, SG&A, and share-count coverage.
 
-### 7. Scoring transparency
+### 8. Scoring transparency
 
 Partially added: Score Details explains component scores and rationale.
 
@@ -224,7 +271,7 @@ Still needed:
 - Rule-by-rule point attribution.
 - More detailed drill-downs for valuation, quality, balance sheet, dilution, and FCF.
 
-### 8. Peer group improvements
+### 9. Peer group improvements
 
 Needed:
 
@@ -235,7 +282,7 @@ Needed:
 - Outlier detection.
 - Option to exclude specific peers from comparison.
 
-### 9. Privacy hardening
+### 10. Privacy hardening
 
 Needed:
 
@@ -244,7 +291,7 @@ Needed:
 - Optional local settings export/import.
 - Better API-key masking.
 
-### 10. Testing and release workflow
+### 11. Testing and release workflow
 
 Needed:
 
