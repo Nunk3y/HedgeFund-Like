@@ -90,7 +90,7 @@ EXTRA_PEER_GROUPS = [
 
 WORKFLOW_TABS = [
     "0. Idea Funnel",
-    "1. Mandate",
+    "1. Thesis",
     "2. Business",
     "3. Filing Review",
     "4. Historical Picture",
@@ -164,16 +164,17 @@ class StreamlinedMainWindow(MainWindow):
 
         self.center_tabs.addTab(
             self.make_notes_panel(
-                "1. Mandate",
-                "Start here after selecting one company from the Idea Funnel. Define the job of the stock before analyzing it.",
-                "Mandate type: Long-term compounder / GARP / Turnaround / Cyclical recovery / Special situation / Deep value / Speculative catalyst / Peer-relative / Future-tech option\n"
-                "Time horizon: 3 months / 1-2 years / 3-5 years\n"
-                "Why this belongs on the watchlist:\n"
-                "Portfolio role: Core / researched individual / speculative future-tech\n"
-                "ETF alternative to beat:\n"
-                "Initial reason to reject it:\n",
+                "1. Thesis",
+                "Start here after selecting one company from the Idea Funnel. State why you think the stock can go up before doing the deeper work.",
+                "One-sentence thesis:\n"
+                "Why I think this stock will go up:\n"
+                "What has to happen for the thesis to work:\n"
+                "What the market may be missing:\n"
+                "Why now:\n"
+                "What would make me stop researching it:\n"
+                "What would prove the thesis wrong:\n",
             ),
-            "1. Mandate",
+            "1. Thesis",
         )
 
         self.center_tabs.addTab(
@@ -404,9 +405,11 @@ class StreamlinedMainWindow(MainWindow):
         self.center_tabs.addTab(
             self.make_notes_panel(
                 "12. Portfolio Management",
-                "Check whether this stock improves the portfolio after risk, concentration, sizing, taxes, and ETF alternatives.",
+                "Check whether this stock improves the portfolio after time horizon, role, risk, concentration, sizing, taxes, and ETF alternatives.",
                 "Portfolio date:\n"
                 "Total portfolio value:\n"
+                "Time horizon for this position: 3 months / 1-2 years / 3-5 years\n"
+                "Portfolio role: Core / researched individual / speculative future-tech\n"
                 "Core ETF / diversified funds target %:\n"
                 "Core ETF / diversified funds actual %:\n"
                 "Researched individual stocks target %:\n"
