@@ -88,13 +88,25 @@ EXTRA_PEER_GROUPS = [
     "Fusion-Adjacent / Industrial Investor",
 ]
 
+# Top-level workflow follows docs/hedge_fund_stock_analysis_guide.md -> "How To Use This App".
+WORKFLOW_TABS = [
+    "Overview",
+    "Master Watchlist",
+    "Score Details",
+    "Data Quality",
+    "Peer Comparison",
+    "Data Details",
+    "Research Guide",
+]
+
+# Nested Data Details order follows the same guide; Market Data is appended as a raw/normalized audit view.
 BULK_DATA_TABS = [
-    "API Cache",
-    "Market Data",
     "Historical Fundamentals",
     "Price Trends",
     "Price History",
+    "API Cache",
     "Model Readiness",
+    "Market Data",
 ]
 
 
@@ -111,12 +123,23 @@ class StreamlinedMainWindow(MainWindow):
         super().__init__()
         self.hide_top_nav_buttons()
         self.group_bulk_data_tabs()
+        self.apply_research_guide_tab_order()
         self.update_active_tab_header()
 
     def hide_top_nav_buttons(self) -> None:
         for button in self.findChildren(QPushButton):
             if button.objectName() == "NavButton":
                 button.hide()
+
+    def apply_research_guide_tab_order(self) -> None:
+        if not hasattr(self, "center_tabs"):
+            return
+        for target_index, tab_name in enumerate(WORKFLOW_TABS):
+            current_index = self.find_tab_index(tab_name)
+            if current_index >= 0 and current_index != target_index:
+                self.center_tabs.tabBar().moveTab(current_index, target_index)
+        if self.find_tab_index("Overview") >= 0:
+            self.center_tabs.setCurrentIndex(self.find_tab_index("Overview"))
 
     def group_bulk_data_tabs(self) -> None:
         if not hasattr(self, "center_tabs"):
