@@ -6,13 +6,13 @@ from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QGridLayout,
-    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
     QPushButton,
     QTableWidget,
     QTableWidgetItem,
+    QTabWidget,
     QTextEdit,
     QVBoxLayout,
     QWidget,
@@ -88,6 +88,15 @@ EXTRA_PEER_GROUPS = [
     "Fusion-Adjacent / Industrial Investor",
 ]
 
+BULK_DATA_TABS = [
+    "API Cache",
+    "Market Data",
+    "Historical Fundamentals",
+    "Price Trends",
+    "Price History",
+    "Model Readiness",
+]
+
 
 def merged_peer_groups() -> list[str]:
     groups: list[str] = []
@@ -98,6 +107,47 @@ def merged_peer_groups() -> list[str]:
 
 
 class StreamlinedMainWindow(MainWindow):
+    def __init__(self) -> None:
+        super().__init__()
+        self.group_bulk_data_tabs()
+        self.update_active_tab_header()
+
+    def group_bulk_data_tabs(self) -> None:
+        if not hasattr(self, "center_tabs"):
+            return
+
+        data_details = QWidget()
+        data_details.setObjectName("DataPanel")
+        data_layout = QVBoxLayout(data_details)
+        data_layout.setContentsMargins(16, 16, 16, 16)
+        data_layout.setSpacing(10)
+
+        title = QLabel("Data Details")
+        title.setObjectName("PanelTitle")
+        hint = QLabel("Raw cache, normalized data, historical fundamentals, price history, and readiness checks.")
+        hint.setObjectName("PanelHint")
+        nested_tabs = QTabWidget()
+        nested_tabs.setObjectName("WorkspaceTabs")
+        nested_tabs.setDocumentMode(True)
+
+        moved_any = False
+        for tab_name in BULK_DATA_TABS:
+            idx = self.find_tab_index(tab_name)
+            if idx < 0:
+                continue
+            widget = self.center_tabs.widget(idx)
+            self.center_tabs.removeTab(idx)
+            nested_tabs.addTab(widget, tab_name)
+            moved_any = True
+
+        if not moved_any:
+            return
+
+        data_layout.addWidget(title)
+        data_layout.addWidget(hint)
+        data_layout.addWidget(nested_tabs, 1)
+        self.center_tabs.addTab(data_details, "Data Details")
+
     def build_overview_tab(self, tabs) -> None:
         overview = QWidget()
         layout = QVBoxLayout(overview)
@@ -126,19 +176,9 @@ class StreamlinedMainWindow(MainWindow):
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setWordWrap(True)
 
-        info_row = QHBoxLayout()
-        info_row.setSpacing(10)
-        info_row.addStretch()
-        for text in ["LOCAL SQLITE", "SEC + FINNHUB", "SCORING FLAGS"]:
-            signal = QLabel(text)
-            signal.setObjectName("SignalPill")
-            info_row.addWidget(signal)
-        info_row.addStretch()
-
         summary_layout.addWidget(eyebrow)
         summary_layout.addWidget(title)
         summary_layout.addWidget(subtitle)
-        summary_layout.addLayout(info_row)
 
         metric_grid = QGridLayout()
         metric_grid.setSpacing(14)
