@@ -5,16 +5,61 @@ from typing import Optional
 DB_PATH = Path("tech_screener.db")
 
 STARTER_TICKERS = [
-    ("NVDA", "NVIDIA Corporation", "AI Hardware / Semiconductors"),
-    ("AVGO", "Broadcom Inc.", "AI Hardware / Semiconductors"),
-    ("AMD", "Advanced Micro Devices, Inc.", "AI Hardware / Semiconductors"),
-    ("INTC", "Intel Corporation", "AI Hardware / Semiconductors"),
-    ("TSM", "Taiwan Semiconductor Manufacturing Company Limited", "Semiconductor Manufacturing"),
-    ("ASML", "ASML Holding N.V.", "Semiconductor Equipment"),
-    ("ARM", "Arm Holdings plc", "Semiconductor IP"),
-    ("MU", "Micron Technology, Inc.", "AI Hardware / Semiconductors"),
-    ("MRVL", "Marvell Technology, Inc.", "AI Hardware / Semiconductors"),
-    ("QCOM", "QUALCOMM Incorporated", "AI Hardware / Semiconductors"),
+    ("NVDA", "NVIDIA Corporation", "AI Hardware / Semiconductors"),  # GPUs and AI accelerators
+    ("AMD", "Advanced Micro Devices, Inc.", "AI Hardware / Semiconductors"),  # GPUs CPUs and AI accelerators
+    ("AVGO", "Broadcom Inc.", "AI Hardware / Semiconductors"),  # Custom AI chips and networking chips
+    ("TSM", "Taiwan Semiconductor Manufacturing Company Limited", "AI Hardware / Semiconductors"),  # Advanced chip manufacturing foundry
+    ("INTC", "Intel Corporation", "AI Hardware / Semiconductors"),  # CPUs foundry and domestic chip manufacturing
+    ("QCOM", "QUALCOMM Incorporated", "AI Hardware / Semiconductors"),  # Mobile edge AI and wireless chips
+    ("MU", "Micron Technology, Inc.", "AI Hardware / Semiconductors"),  # Memory and HBM exposure
+    ("ASML", "ASML Holding N.V.", "Semiconductor Equipment"),  # EUV lithography machines
+    ("AMAT", "", "Semiconductor Equipment"),  # Chip manufacturing tools
+    ("LRCX", "", "Semiconductor Equipment"),  # Etch and deposition tools
+    ("KLAC", "", "Semiconductor Equipment"),  # Inspection and metrology equipment
+    ("SMCI", "", "AI Servers / Data Center Hardware"),  # AI server racks and systems
+    ("DELL", "", "AI Servers / Data Center Hardware"),  # Enterprise servers and AI infrastructure
+    ("HPE", "", "AI Servers / Data Center Hardware"),  # Enterprise servers networking and data-center hardware
+    ("ANET", "", "Data Center Networking"),  # High-speed AI data-center networking
+    ("VRT", "", "Data Center Power / Cooling"),  # Data-center cooling and power infrastructure
+    ("ETN", "", "Electrical Grid Equipment"),  # Switchgear breakers and power infrastructure
+    ("GEV", "", "Electrical Grid Equipment"),  # Grid equipment turbines and nuclear exposure
+    ("HUBB", "", "Electrical Grid Equipment"),  # Utility and electrical infrastructure hardware
+    ("PWR", "", "Electrical Grid Construction"),  # Transmission lines substations and grid services
+    ("ABBNY", "", "Industrial Automation / Robotics"),  # Factory automation robotics and electrification
+    ("TER", "", "Industrial Automation / Robotics"),  # Testing equipment and automation exposure
+    ("ISRG", "", "Medical Robotics"),  # Surgical robotics
+    ("SYM", "", "Warehouse Robotics"),  # Warehouse automation systems
+    ("TSLA", "", "EVs / Batteries / Robotics"),  # EVs batteries energy storage and humanoid robotics
+    ("AVAV", "", "Defense Drones"),  # Military drones and loitering munitions
+    ("KTOS", "", "Defense Drones"),  # Military drones and target drones
+    ("LMT", "", "Defense / Space Hardware"),  # Missiles aircraft satellites and defense systems
+    ("NOC", "", "Defense / Space Hardware"),  # Aerospace defense and space systems
+    ("RTX", "", "Defense / Aerospace Hardware"),  # Missiles sensors and aircraft systems
+    ("RKLB", "", "Space Hardware"),  # Rockets launch systems and satellites
+    ("IRDM", "", "Satellite Communications"),  # Satellite communications network
+    ("FLNC", "", "Battery / Energy Storage"),  # Grid-scale battery storage
+    ("ENPH", "", "Solar / Energy Hardware"),  # Solar inverters and home energy systems
+    ("ALB", "", "Battery Materials"),  # Lithium production
+    ("QS", "", "Solid-State Batteries"),  # Solid-state battery development
+    ("XYL", "", "Water Infrastructure Tech"),  # Pumps meters and water infrastructure
+    ("ECL", "", "Water Infrastructure Tech"),  # Water treatment systems and chemicals
+    ("DHR", "", "Water / Lab Equipment"),  # Filtration diagnostics and lab equipment
+    ("FANUY", "", "Advanced Manufacturing"),  # CNC machines and factory automation
+    ("DDD", "", "3D Printing / Additive Manufacturing"),  # Industrial 3D printing
+    ("DM", "", "3D Printing / Additive Manufacturing"),  # Metal and binder-jet 3D printing
+    ("BWXT", "", "Nuclear Hardware / Services"),  # Nuclear components fuel and reactor services
+    ("SMR", "", "SMR / Advanced Nuclear"),  # Small modular reactors
+    ("OKLO", "", "Advanced Nuclear / Microreactors"),  # Advanced fission microreactors
+    ("CCJ", "", "Uranium / Nuclear Fuel"),  # Uranium mining and nuclear fuel exposure
+    ("LEU", "", "Nuclear Fuel / Enrichment"),  # Uranium enrichment and HALEU exposure
+    ("UUUU", "", "Uranium / Rare Earths"),  # Uranium and critical minerals
+    ("CEG", "", "Nuclear Power Operator"),  # Existing nuclear power plants
+    ("DUK", "", "Utility / Nuclear Power"),  # Regulated utility with nuclear assets
+    ("SO", "", "Utility / Nuclear Power"),  # Regulated utility with nuclear assets
+    ("MSFT", "", "Fusion-Adjacent / Big Tech"),  # Indirect fusion exposure through Helion agreement
+    ("GOOGL", "", "Fusion-Adjacent / Big Tech"),  # Indirect fusion and advanced energy exposure
+    ("E", "", "Fusion-Adjacent / Energy"),  # Energy company with fusion investment exposure
+    ("MITSY", "", "Fusion-Adjacent / Industrial Investor"),  # Industrial investment exposure to fusion
 ]
 
 STARTER_TICKER_SET = {ticker for ticker, _, _ in STARTER_TICKERS}
