@@ -4,22 +4,21 @@
 
 HedgeFund-Like is a local-first desktop stock screener and research workflow app for sector-first investors.
 
-The user starts with a sector or theme they already believe may improve, such as AI hardware, data centers, grid infrastructure, robotics, nuclear, fusion-adjacent energy, quantum computing, or other future-tech themes. The app's job is not to re-prove that the broad theme matters. The app's job is to help decide which public company is the best vehicle for that theme, whether the company has real proof behind the story, whether the numbers support the idea, and whether the stock is worth more work.
+The user starts with a sector or theme they already believe may improve, such as AI hardware, data centers, grid infrastructure, robotics, nuclear, fusion-adjacent energy, quantum computing, or other future-tech themes. The app's job is not to re-prove that the broad theme matters. The app's job is to first show which tickers are worth attention, then help decide whether a flagged company is the best public-company vehicle for that theme.
 
 The app is not a buy/sell signal. It is a local research system and decision filter.
 
 The app should help answer:
 
-1. I like this sector, but which companies deserve deeper work?
-2. Does this ticker actually give me the sector exposure I want?
-3. Is this company a leader or just loosely connected to the theme?
-4. Is the theme already showing up in real products, customers, revenue, margins, or guidance?
-5. Are the numbers improving enough to support the story?
-6. Is this ticker better than its closest peers or the sector ETF?
-7. Is the future already priced in?
-8. What could make this the wrong company to own for the sector?
-9. Should I pass, watch, deep dive more, or treat it as a candidate position?
-10. If it becomes a candidate position, how much belongs in the portfolio?
+1. I like this sector, but which companies are flagged by the screener?
+2. Why did the app flag this ticker?
+3. Are the numbers strong enough to justify more work?
+4. Is this ticker better than its closest peers or the sector ETF?
+5. Is the future already priced in?
+6. What could make this the wrong company to own for the sector?
+7. After the data checks, does this ticker actually fit my sector thesis?
+8. Should I pass, watch, deep dive more, or treat it as a candidate position?
+9. If it becomes a candidate position, how much belongs in the portfolio?
 
 ## Core User Philosophy
 
@@ -27,8 +26,8 @@ The app should fit this investing style:
 
 - The user is not trying to be a business-school analyst first.
 - The user starts with broad future themes, especially physical technology and infrastructure.
-- The user wants to test whether a specific stock is a good way to express that theme.
-- The app should avoid vague homework-style prompts that do not lead to a decision.
+- The user wants the app to flag which companies deserve attention before doing manual research.
+- The user does not want to answer manual sector-fit questions before seeing whether the stock is actually flagged and financially interesting.
 - Every research step should act as a gate.
 - If a gate shows a major problem, the user should be able to stop and move to another ticker.
 - The app should not force full analysis of every company.
@@ -36,7 +35,7 @@ The app should fit this investing style:
 The app should answer:
 
 ```text
-Given that I already like this sector, is this company the best public-company vehicle for that sector?
+Given that I already like this sector, did the screener flag this company for a good reason, and is it the best public-company vehicle for that sector?
 ```
 
 ## Current App Status
@@ -68,7 +67,7 @@ The app currently supports:
 - Full pipeline for one selected ticker.
 - Full pipeline for all active tickers.
 - Dark local-first dashboard UI.
-- Sector-first gate workflow in the active `main.py` launch path.
+- Screener-first sector workflow in the active `main.py` launch path.
 
 ## Local Data Files
 
@@ -85,20 +84,19 @@ Do not commit database files, API keys, caches, logs, virtual environments, or g
 
 ## Target Workflow
 
-The app should use a sector-first gate workflow, not a generic business-school checklist.
+The app should use a screener-first sector workflow, not a generic business-school checklist.
 
 Current target workflow:
 
 1. **Sector Funnel**
-2. **Exposure Gate**
-3. **Leader Gate**
-4. **Proof Gate**
-5. **Numbers Gate**
-6. **Peer Gate**
-7. **Valuation Gate**
-8. **Risk Gate**
-9. **Decision**
-10. **Portfolio Fit**
+2. **Flag Review**
+3. **Numbers Gate**
+4. **Peer Gate**
+5. **Valuation Gate**
+6. **Risk Gate**
+7. **Sector Fit Check**
+8. **Decision**
+9. **Portfolio Fit**
 
 Each gate should end with one of these results:
 
@@ -128,65 +126,41 @@ Main question:
 Inside this sector/theme, which tickers are worth testing further?
 ```
 
-### 1. Exposure Gate
+### 1. Flag Review
 
-Purpose: confirm the company actually gives the desired sector exposure.
+Purpose: understand why the app flagged the ticker before doing manual research.
 
 Main question:
 
 ```text
-Does this company actually give me the sector exposure I want?
+Why did the app flag this stock, and is that flag based on clean data?
 ```
 
-Example: If the user likes AI hardware, QCOM should not be treated the same as NVDA. QCOM may be edge AI/mobile/connected-device exposure, while NVDA is data-center accelerator exposure.
+This step should look at the app's bucket, score, strongest signal, weakest signal, and data quality.
 
-### 2. Leader Gate
+### 2. Numbers Gate
 
-Purpose: decide whether this company is likely to be one of the better public-company vehicles for the theme.
-
-Main question:
-
-```text
-Is this company likely to be one of the winners in this part of the sector?
-```
-
-This gate should compare leadership, product strength, customer base, ecosystem, scale, manufacturing position, and competitive advantage.
-
-### 3. Proof Gate
-
-Purpose: separate real business evidence from future-story exposure.
+Purpose: decide whether the financials support more work.
 
 Main question:
 
 ```text
-Is the sector belief already showing up in this company?
-```
-
-Proof can include real products, material revenue, paying customers, contracts, backlog, design wins, management guidance, improving margins, or improving cash flow tied to the theme.
-
-### 4. Numbers Gate
-
-Purpose: decide whether the financials support the sector story.
-
-Main question:
-
-```text
-Are the numbers improving enough to keep going?
+Are the numbers strong enough to justify going further?
 ```
 
 This gate uses historical fundamentals, market data, score details, and model readiness.
 
-### 5. Peer Gate
+### 3. Peer Gate
 
 Purpose: decide whether this ticker is a better sector vehicle than peers or an ETF.
 
 Main question:
 
 ```text
-Why this company instead of the closest peers or sector ETF?
+Is this flagged company actually better than the other available choices?
 ```
 
-### 6. Valuation Gate
+### 4. Valuation Gate
 
 Purpose: check whether the future is already priced into the stock.
 
@@ -196,7 +170,7 @@ Main question:
 Can the stock still go up enough from today's price to justify the risk?
 ```
 
-### 7. Risk Gate
+### 5. Risk Gate
 
 Purpose: identify why this may be the wrong company to own for the sector.
 
@@ -208,7 +182,23 @@ What could make this the wrong vehicle for the sector?
 
 Supporting filing review belongs here. The user should not read filings deeply for every ticker. Filing review is only worth doing if earlier gates justify more work.
 
-### 8. Decision
+### 6. Sector Fit Check
+
+Purpose: after the screener, numbers, peers, valuation, and risks, answer the manual sector-fit question.
+
+Main question:
+
+```text
+After checking the data, is this actually the right company for my sector thesis?
+```
+
+This combines the older Exposure, Leader, and Proof gates into one final manual check:
+
+- Does this company give the desired sector exposure?
+- Is it one of the better public companies in the sector?
+- Is there real proof, or just a future story?
+
+### 7. Decision
 
 Purpose: place the ticker in a research bucket.
 
@@ -221,7 +211,7 @@ Deep Dive More
 Candidate Position
 ```
 
-### 9. Portfolio Fit
+### 8. Portfolio Fit
 
 Purpose: only after a ticker becomes a candidate position, decide size and concentration.
 
@@ -282,10 +272,12 @@ Sebastiaan Vriese savriese@gmail.com
 
 5. Enter Finnhub API key.
 6. Run **Run Full Pipeline** for one selected ticker, or **Run Full Pipeline For All Active** for the whole active watchlist.
-7. Use **Sector Funnel** to find which names deserve deeper work.
-8. Work through the gates only until the ticker either earns the next gate or gets passed for now.
-9. Use **Decision** to bucket the ticker.
-10. Use **Portfolio Fit** only if the ticker becomes a candidate position.
+7. Use **Sector Funnel** to find which names are flagged.
+8. Use **Flag Review** to understand why the app flagged the ticker.
+9. Work through Numbers, Peer, Valuation, and Risk gates.
+10. Use **Sector Fit Check** only after the ticker has survived the earlier data checks.
+11. Use **Decision** to bucket the ticker.
+12. Use **Portfolio Fit** only if the ticker becomes a candidate position.
 
 ## Pipeline Scope
 
@@ -308,8 +300,9 @@ The goal is to avoid separate manual repair/rebuild/refresh buttons unless they 
 - Keep one active launch path.
 - Avoid unused wrapper UI files.
 - Avoid stacking messy one-off UI files.
-- Follow the sector-first gate workflow.
+- Follow the screener-first sector workflow.
 - Do not drift back to a generic business-school research checklist.
+- Do not put manual exposure/leader/proof questions before the app's flag, numbers, peer, valuation, and risk checks.
 - Every workflow step should help decide whether to continue, require proof, or pass for now.
 - Keep raw/bulk data views secondary to the gate workflow.
 - Keep readable screening views separate from raw data tables.
