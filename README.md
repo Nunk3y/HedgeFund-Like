@@ -2,20 +2,42 @@
 
 ## Purpose
 
-HedgeFund-Like is a local-first desktop stock screener and research workflow app for organizing a watchlist, pulling public-company data, comparing companies against peers, and building a repeatable investment research process.
+HedgeFund-Like is a local-first desktop stock screener and research workflow app for sector-first investors.
 
-The app is not a buy/sell signal. It is a research system.
+The user starts with a sector or theme they already believe may improve, such as AI hardware, data centers, grid infrastructure, robotics, nuclear, fusion-adjacent energy, quantum computing, or other future-tech themes. The app's job is not to re-prove that the broad theme matters. The app's job is to help decide which public company is the best vehicle for that theme, whether the company has real proof behind the story, whether the numbers support the idea, and whether the stock is worth more work.
+
+The app is not a buy/sell signal. It is a local research system and decision filter.
 
 The app should help answer:
 
-1. What is the job of this stock in the portfolio?
-2. Is the data complete enough to trust?
-3. How does the company score on quality, valuation, balance sheet, dilution, FCF, market behavior, and peer comparison?
-4. What does the business actually do?
-5. What do the SEC filings say?
-6. What is the variant view?
-7. What would prove the thesis wrong?
-8. Should the ticker be passed, watched, deep-dived, or treated as a candidate position?
+1. I like this sector, but which companies deserve deeper work?
+2. Does this ticker actually give me the sector exposure I want?
+3. Is this company a leader or just loosely connected to the theme?
+4. Is the theme already showing up in real products, customers, revenue, margins, or guidance?
+5. Are the numbers improving enough to support the story?
+6. Is this ticker better than its closest peers or the sector ETF?
+7. Is the future already priced in?
+8. What could make this the wrong company to own for the sector?
+9. Should I pass, watch, deep dive more, or treat it as a candidate position?
+10. If it becomes a candidate position, how much belongs in the portfolio?
+
+## Core User Philosophy
+
+The app should fit this investing style:
+
+- The user is not trying to be a business-school analyst first.
+- The user starts with broad future themes, especially physical technology and infrastructure.
+- The user wants to test whether a specific stock is a good way to express that theme.
+- The app should avoid vague homework-style prompts that do not lead to a decision.
+- Every research step should act as a gate.
+- If a gate shows a major problem, the user should be able to stop and move to another ticker.
+- The app should not force full analysis of every company.
+
+The app should answer:
+
+```text
+Given that I already like this sector, is this company the best public-company vehicle for that sector?
+```
 
 ## Current App Status
 
@@ -43,11 +65,10 @@ The app currently supports:
 - Score Details view.
 - Data Quality view.
 - Peer Comparison view.
-- Data Details tab that groups raw/bulk data views.
-- Research Guide tab.
 - Full pipeline for one selected ticker.
 - Full pipeline for all active tickers.
 - Dark local-first dashboard UI.
+- Sector-first gate workflow in the active `main.py` launch path.
 
 ## Local Data Files
 
@@ -64,52 +85,165 @@ Do not commit database files, API keys, caches, logs, virtual environments, or g
 
 ## Target Workflow
 
-The app should become a tabbed version of the Research Guide's 10-step workflow.
+The app should use a sector-first gate workflow, not a generic business-school checklist.
 
-The primary top-level workflow should be:
+Current target workflow:
 
-1. **Mandate**
-2. **First-Pass Screen**
-3. **Business**
-4. **Filing Review**
-5. **Historical Picture**
-6. **Business Quality**
-7. **Peer Comparison**
-8. **Market Behavior**
-9. **Variant View**
-10. **Decision**
+1. **Sector Funnel**
+2. **Exposure Gate**
+3. **Leader Gate**
+4. **Proof Gate**
+5. **Numbers Gate**
+6. **Peer Gate**
+7. **Valuation Gate**
+8. **Risk Gate**
+9. **Decision**
+10. **Portfolio Fit**
 
-This is the target because it turns the app into a complete repeatable research workflow instead of only a data screener.
+Each gate should end with one of these results:
 
-## How Existing Views Should Map Into The 10-Step Workflow
+```text
+Continue
+Needs Proof
+Pass For Now
+```
 
-| Research step | App support / needed UI |
-|---|---|
-| 1. Mandate | Add fields for stock type, time horizon, reason for tracking, and portfolio role |
-| 2. First-Pass Screen | Use Master Watchlist, readiness, score, overall flag, data confidence, market cap, revenue, FCF, cash, debt, dilution, momentum, drawdown, volatility |
-| 3. Business | Add memo fields for what the company sells, customers, demand type, competitors, cost drivers, obsolescence risk, and price-maker/price-taker judgment |
-| 4. Filing Review | Add filing checklist for 10-K, 10-Q, 8-K, proxy, MD&A, risk factors, liquidity, debt, segments, customer concentration, legal proceedings |
-| 5. Historical Picture | Use Historical Fundamentals and add notes for 3-5 year trends |
-| 6. Business Quality | Use Score Details and add qualitative quality notes |
-| 7. Peer Comparison | Use Peer Comparison and peer valuation/quality notes |
-| 8. Market Behavior | Use Price Trends and Price History |
-| 9. Variant View | Add fields for consensus view, variant view, evidence, catalyst, timeline, and kill criteria |
-| 10. Decision | Add final bucket: Pass / Watchlist / Deep Dive / Candidate Position, plus reason and next review date |
+Meaning:
 
-## Supporting Data Details
+- **Continue** means the ticker earned the next step.
+- **Needs Proof** means the idea is not dead, but the user needs a specific missing proof point before continuing.
+- **Pass For Now** means stop researching this ticker and go back to the Sector Funnel or another company.
 
-Raw/bulk data should not be the primary workflow. It should be available as supporting detail inside the relevant research steps or under a secondary data/debug area.
+## Gate Definitions
 
-Current bulk/raw views:
+### 0. Sector Funnel
 
-1. Historical Fundamentals
-2. Price Trends
-3. Price History
-4. API Cache
-5. Model Readiness
-6. Market Data
+Purpose: screen all tickers in a sector or peer group and decide which names deserve deeper work.
 
-The app should keep these available, but they should support the 10-step research flow instead of dominating the main navigation.
+This is where all tickers live. This is not a single-company deep dive. It includes the overview, master watchlist, and data quality views.
+
+Main question:
+
+```text
+Inside this sector/theme, which tickers are worth testing further?
+```
+
+### 1. Exposure Gate
+
+Purpose: confirm the company actually gives the desired sector exposure.
+
+Main question:
+
+```text
+Does this company actually give me the sector exposure I want?
+```
+
+Example: If the user likes AI hardware, QCOM should not be treated the same as NVDA. QCOM may be edge AI/mobile/connected-device exposure, while NVDA is data-center accelerator exposure.
+
+### 2. Leader Gate
+
+Purpose: decide whether this company is likely to be one of the better public-company vehicles for the theme.
+
+Main question:
+
+```text
+Is this company likely to be one of the winners in this part of the sector?
+```
+
+This gate should compare leadership, product strength, customer base, ecosystem, scale, manufacturing position, and competitive advantage.
+
+### 3. Proof Gate
+
+Purpose: separate real business evidence from future-story exposure.
+
+Main question:
+
+```text
+Is the sector belief already showing up in this company?
+```
+
+Proof can include real products, material revenue, paying customers, contracts, backlog, design wins, management guidance, improving margins, or improving cash flow tied to the theme.
+
+### 4. Numbers Gate
+
+Purpose: decide whether the financials support the sector story.
+
+Main question:
+
+```text
+Are the numbers improving enough to keep going?
+```
+
+This gate uses historical fundamentals, market data, score details, and model readiness.
+
+### 5. Peer Gate
+
+Purpose: decide whether this ticker is a better sector vehicle than peers or an ETF.
+
+Main question:
+
+```text
+Why this company instead of the closest peers or sector ETF?
+```
+
+### 6. Valuation Gate
+
+Purpose: check whether the future is already priced into the stock.
+
+Main question:
+
+```text
+Can the stock still go up enough from today's price to justify the risk?
+```
+
+### 7. Risk Gate
+
+Purpose: identify why this may be the wrong company to own for the sector.
+
+Main question:
+
+```text
+What could make this the wrong vehicle for the sector?
+```
+
+Supporting filing review belongs here. The user should not read filings deeply for every ticker. Filing review is only worth doing if earlier gates justify more work.
+
+### 8. Decision
+
+Purpose: place the ticker in a research bucket.
+
+Options:
+
+```text
+Pass
+Watch
+Deep Dive More
+Candidate Position
+```
+
+### 9. Portfolio Fit
+
+Purpose: only after a ticker becomes a candidate position, decide size and concentration.
+
+This is where time horizon, portfolio role, theme exposure, max position size, ETF alternative, and rebalance decision belong.
+
+## Supporting Data Views
+
+Raw/bulk data should not dominate the main navigation. It should support the gate workflow.
+
+Current supporting views:
+
+- Historical Fundamentals
+- Market Data
+- Score Details
+- Model Readiness
+- Peer Comparison
+- API Cache
+- Price Trends
+- Price History
+- Data Quality
+
+The user should not have to interpret every raw table before moving on. The app should increasingly translate raw data into gate-level decisions.
 
 ## Active Action Panel
 
@@ -131,9 +265,10 @@ Those operations should be handled by the full pipeline instead of being separat
 
 ## Basic Use
 
-1. Add a ticker.
-2. Assign a peer group.
-3. Enter SEC User-Agent in this format:
+1. Pick a sector/theme the user already believes may improve.
+2. Add tickers that represent possible public-company vehicles for that theme.
+3. Assign peer groups.
+4. Enter SEC User-Agent in this format:
 
 ```text
 Your Name your-email@example.com
@@ -145,10 +280,12 @@ Example:
 Sebastiaan Vriese savriese@gmail.com
 ```
 
-4. Enter Finnhub API key.
-5. Run **Run Full Pipeline** for the selected ticker, or **Run Full Pipeline For All Active** for the whole active watchlist.
-6. Work through the 10 research workflow tabs in order.
-7. Use the final Decision step before treating a ticker as actionable.
+5. Enter Finnhub API key.
+6. Run **Run Full Pipeline** for one selected ticker, or **Run Full Pipeline For All Active** for the whole active watchlist.
+7. Use **Sector Funnel** to find which names deserve deeper work.
+8. Work through the gates only until the ticker either earns the next gate or gets passed for now.
+9. Use **Decision** to bucket the ticker.
+10. Use **Portfolio Fit** only if the ticker becomes a candidate position.
 
 ## Pipeline Scope
 
@@ -171,29 +308,39 @@ The goal is to avoid separate manual repair/rebuild/refresh buttons unless they 
 - Keep one active launch path.
 - Avoid unused wrapper UI files.
 - Avoid stacking messy one-off UI files.
-- Make the visible workflow follow the Research Guide.
-- Turn the 10-step Research Guide into the primary tab workflow.
-- Keep raw/bulk data views secondary to the research workflow.
+- Follow the sector-first gate workflow.
+- Do not drift back to a generic business-school research checklist.
+- Every workflow step should help decide whether to continue, require proof, or pass for now.
+- Keep raw/bulk data views secondary to the gate workflow.
 - Keep readable screening views separate from raw data tables.
 - Do not fake missing financial data.
 - If data is partial, stale, unavailable, or currency-distorted, mark it clearly.
-- Do not turn the app into broker integration, auto-trading, or buy/sell recommendations.
+- Do not turn the app into broker integration, auto-trading, or automatic buy/sell recommendations.
 
 ## Still Needs To Be Done
 
-### 1. Convert the UI to the 10-step workflow
+### 1. Save gate notes per ticker
 
 Needed:
 
-- Replace the current top-level screening/data tabs with the 10 Research Guide steps.
-- Embed existing screening/data views inside the correct research steps.
-- Add editable local memo fields for steps that require judgment.
-- Save per-ticker notes and decisions locally in `tech_screener.db`.
-- Add final decision bucket: Pass / Watchlist / Deep Dive / Candidate Position.
-- Add next review date.
-- Add kill criteria and catalyst tracking.
+- Add local database tables for gate notes.
+- Save gate result per ticker and per gate.
+- Save proof-needed notes.
+- Save decision bucket.
+- Save review trigger/date.
+- Show gate status beside each ticker in the Sector Funnel.
 
-### 2. Clean code structure
+### 2. Improve beginner usability
+
+Needed:
+
+- Add plain-English explanations to every gate.
+- Add examples for each gate using real ticker examples.
+- Add 'what a good answer means' and 'what a weak answer means.'
+- Convert more raw table data into simple gate-level interpretation.
+- Avoid jargon unless the app explains it.
+
+### 3. Clean code structure
 
 The active app currently uses a streamlined launch path in `main.py` that subclasses the base UI. This works, but the long-term cleanup should be to move the streamlined UI code into a proper module and remove dead/unused UI paths.
 
@@ -205,20 +352,19 @@ Needed:
 - Keep `main.py` small: import the app class and launch it.
 - Confirm there are no unused wrapper files.
 
-### 3. UI polish
+### 4. UI polish
 
 Needed:
 
-- Make workflow tabs auto-size cleanly at different window widths.
-- Keep tab names readable without clipping.
+- Make workflow tabs readable at different window widths.
+- Consider replacing top tabs with a left-side step navigator if the gate list gets cramped.
 - Improve table column sizing presets.
 - Save column widths.
-- Save useful layout preferences without fighting the Research Guide workflow order.
 - Improve loading/progress indicators during long full-pipeline runs.
 - Improve error messages when API pulls fail.
 - Make confirmation dialogs readable in dark mode without breaking launch.
 
-### 4. Data quality and transparency
+### 5. Data quality and transparency
 
 Needed:
 
@@ -229,7 +375,7 @@ Needed:
 - More detailed data-quality summary by ticker.
 - More explicit warnings for non-USD SEC units and ADR/foreign issuer issues.
 
-### 5. Historical fundamentals
+### 6. Historical fundamentals
 
 Partially added: `historical_fundamentals` is rebuilt from SEC annual companyfacts rows.
 
@@ -240,7 +386,7 @@ Still needed:
 - Drill-downs showing which SEC concept supplied each historical value.
 - Stronger restatement/duplicate annual fact handling.
 
-### 6. Historical price data
+### 7. Historical price data
 
 Partially added: daily price candles are stored in `price_history`, and derived metrics are stored in `price_metrics`.
 
@@ -251,7 +397,7 @@ Still needed:
 - More configurable trend windows.
 - Optional second fallback provider if Finnhub and Yahoo are unavailable or rate-limited.
 
-### 7. Foreign issuer handling
+### 8. Foreign issuer handling
 
 Needed:
 
@@ -261,7 +407,7 @@ Needed:
 - ADR/share-count conversion awareness.
 - Better disclosure notes for partial SBC, R&D, SG&A, and share-count coverage.
 
-### 8. Scoring transparency
+### 9. Scoring transparency
 
 Partially added: Score Details explains component scores and rationale.
 
@@ -271,7 +417,7 @@ Still needed:
 - Rule-by-rule point attribution.
 - More detailed drill-downs for valuation, quality, balance sheet, dilution, and FCF.
 
-### 9. Peer group improvements
+### 10. Peer group improvements
 
 Needed:
 
@@ -282,7 +428,7 @@ Needed:
 - Outlier detection.
 - Option to exclude specific peers from comparison.
 
-### 10. Privacy hardening
+### 11. Privacy hardening
 
 Needed:
 
@@ -291,7 +437,7 @@ Needed:
 - Optional local settings export/import.
 - Better API-key masking.
 
-### 11. Testing and release workflow
+### 12. Testing and release workflow
 
 Needed:
 
@@ -314,10 +460,11 @@ Do not add these until the data pipeline and scoring are more stable:
 - Automated buy/sell recommendations.
 - Broker integration.
 - Auto-trading.
-- Portfolio allocation advice.
 - Complex machine-learning models.
 - Cloud sync.
 - User accounts.
+
+Portfolio sizing support is allowed only as a user-controlled planning aid, not as automatic allocation advice.
 
 ## Development Rules
 
