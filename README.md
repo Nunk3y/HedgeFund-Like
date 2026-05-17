@@ -2,194 +2,251 @@
 
 ## Purpose
 
-HedgeFund-Like is designed to become a desktop stock screener and research assistant for finding, filtering, and comparing public companies before doing a deeper manual review.
+HedgeFund-Like is a local-first desktop stock screener and research assistant for organizing a watchlist, pulling public-company data, comparing companies against peers, and deciding which names deserve deeper manual research.
 
-The app is intended to combine company fundamentals, market data, readiness scoring, watchlist organization, flagging, and peer comparison into one workflow.
+The app is not a buy/sell signal. It is a first-pass analyst tool.
 
-## Core Design Goal
+The app should help answer:
 
-The app is not meant to be a buy/sell signal.
-
-It is meant to be a first-pass screening system that helps identify which companies are worth deeper research and which companies should be skipped, watched, or investigated further.
+1. Is the ticker data complete enough to trust?
+2. How does the company score on quality, valuation, balance sheet, dilution, FCF, price trend, and peer comparison?
+3. Which names deserve deeper research?
+4. Which names should be watched, passed, or fixed because data is weak?
 
 ## Current App Status
 
 The app currently supports:
 
 - Desktop UI built with PySide6.
+- Local SQLite storage.
+- No default starter tickers. New databases start empty.
 - Watchlist management.
 - Peer group assignment.
-- SEC companyfacts data pulls.
-- Finnhub quote, profile, and metric pulls.
-- Local SQLite cache for retrieved API data.
-- Local-only API credential storage in `tech_screener.db`.
-- SEC User-Agent saving locally, separate from GitHub.
+- Searchable watchlist control area.
+- SEC User-Agent field with format help.
+- Finnhub API-key field with local-only storage.
+- Separate local storage for personal settings/API credentials.
+- SEC companyfacts pulls.
+- Finnhub quote, profile, metric, and candle pulls.
+- Yahoo Chart fallback for daily price history when Finnhub candles are unavailable.
+- Local raw API cache.
 - Normalized market-data layer.
+- Historical fundamentals table from SEC annual companyfacts rows.
+- Price history table.
+- Price trend metrics: 52-week high/low, returns, drawdown, momentum, and volatility.
 - Model readiness scoring.
 - Master Watchlist screening view.
+- Score Details view.
+- Data Quality view.
 - Peer Comparison view.
-- API Cache view.
-- Market Data view.
-- Model Readiness view.
-- Dedicated historical fundamentals table populated from SEC annual companyfacts rows.
-- Finnhub daily candle pull with local price-history storage.
-- Yahoo Chart fallback for daily price history when the Finnhub candle endpoint is unavailable or not included with the saved key.
-- Standalone SEC-history rebuild and price-history refresh actions.
-- Repair Missing Data action that rebuilds cached SEC history, recalculates existing price metrics, refreshes Finnhub price history when an API key is available, then renormalizes market data and readiness.
-- Price Trend view with 52-week high/low, returns, drawdown, momentum, and volatility metrics.
-- Historical Fundamentals and Price History UI views.
-- Score Details view that explains each ticker's data, quality, valuation, balance-sheet, dilution, and FCF scores.
-- Color-coded score and flag cells so high-potential, watchlist, warning, and weak names are easier to scan.
-- Data Quality view that marks key fields as complete, partial, stale, or missing with suggested repair actions.
-- Data Quality warning for non-USD SEC units that can distort valuation multiples for foreign issuers.
-- High-level valuation, quality, balance sheet, dilution, FCF, and data-confidence flags.
-- Partial support for foreign issuers using IFRS SEC companyfacts.
-- DEI share-count fallback for historical dilution when standard share concepts are incomplete.
-- Larger custom scrollbars.
-- Dark premium dashboard UI.
-- Functional top navigation.
-- Slimmer polished scrollbars and cleaner tab button styling.
-- Draggable workspace tabs with locally saved custom tab order.
-- Polished HTML Overview HUD with colored signal tiles, score badges, decision buckets, and research alerts.
-- A ticker label in wide tables so row context is easier to track while horizontally scrolling.
+- Data Details tab that groups raw/bulk data views.
+- Research Guide tab.
+- Full pipeline for one selected ticker.
+- Full pipeline for all active tickers.
+- Dark local-first dashboard UI.
 
-## Planned Workflow
+## Local Data Files
 
-1. Add or select a ticker.
+The app uses two local database files:
+
+| File | Purpose | Safe to delete? |
+|---|---|---|
+| `tech_screener.db` | Watchlist, tickers, peer groups, SEC/Finnhub cache, market data, historical fundamentals, price history, readiness/scoring data | Deletes stock/research data only |
+| `personal_settings.db` | SEC User-Agent, Finnhub API key, app settings | Deletes API/personal settings only |
+
+Both files are local-only and ignored by Git through `*.db` rules.
+
+Do not commit database files, API keys, caches, logs, virtual environments, or generated build outputs.
+
+## Current Workflow
+
+The UI workflow should follow the Research Guide order:
+
+1. **Overview**
+2. **Master Watchlist**
+3. **Score Details**
+4. **Data Quality**
+5. **Peer Comparison**
+6. **Data Details**
+7. **Research Guide**
+
+`Data Details` groups the bulk/raw tables:
+
+1. Historical Fundamentals
+2. Price Trends
+3. Price History
+4. API Cache
+5. Model Readiness
+6. Market Data
+
+The left-side action panel should only show:
+
+- Add / Update Ticker
+- Run Full Pipeline
+- Run Full Pipeline For All Active
+- Save API Settings
+- Delete Selected Ticker
+
+The old separate buttons should stay removed from the visible UI:
+
+- Repair Missing Data
+- Rebuild SEC History
+- Refresh Price History
+
+Those operations should be handled by the full pipeline instead of being separate primary actions.
+
+## Basic Use
+
+1. Add a ticker.
 2. Assign a peer group.
-3. Enter required API credentials locally.
-4. Run the full pipeline.
-5. Pull SEC data.
-6. Pull Finnhub data.
-7. Normalize market data.
-8. Calculate readiness.
-9. Review the ticker in the Master Watchlist.
-10. Check flags and peer comparison.
-11. Decide whether the company deserves deeper manual research.
+3. Enter SEC User-Agent in this format:
 
-If a view is empty after a data pull, use **Repair Missing Data**. It will use cached SEC rows first, then stored price candles, then Finnhub or the Yahoo Chart fallback when the missing view depends on price history that has never been downloaded.
+```text
+Your Name your-email@example.com
+```
 
-## Intended End State
+Example:
 
-The finished app should help screen stocks by:
+```text
+Sebastiaan Vriese savriese@gmail.com
+```
 
-- Adding and managing tickers in a watchlist.
-- Pulling company and financial data from SEC sources.
-- Pulling market, profile, and metric data from Finnhub.
-- Saving retrieved API data into a local SQLite cache.
-- Normalizing SEC and Finnhub data into a consistent market-data layer.
-- Calculating model/readiness status for each ticker.
-- Displaying a readable Master Watchlist for screening.
-- Showing missing, weak, or incomplete data areas.
-- Applying high-level flags for valuation, quality, balance sheet strength, dilution risk, FCF strength, and data confidence.
-- Comparing companies against relevant peer groups.
-- Separating raw calculation data from readable screening views.
+4. Enter Finnhub API key.
+5. Run **Run Full Pipeline** for the selected ticker, or **Run Full Pipeline For All Active** for the whole active watchlist.
+6. Review the ticker through the workflow tabs in order.
+7. Use the Research Guide before deciding whether a ticker deserves a full manual memo.
 
-## Still Needs To Be Added
+## Pipeline Scope
 
-### 1. Proper historical data layer
+The full pipeline should handle:
 
-Partially added: the app now has a dedicated `historical_fundamentals` table rebuilt from SEC annual companyfacts rows after SEC refreshes.
+1. SEC data refresh.
+2. Historical fundamentals rebuild.
+3. Finnhub data refresh.
+4. Price history refresh.
+5. Market-data normalization.
+6. Model readiness calculation.
+7. Table refresh.
 
-Still needed:
+The goal is to avoid separate manual repair/rebuild/refresh buttons unless they are hidden developer/debug tools.
 
-- More complete balance-sheet history where SEC companyfacts coverage is partial.
-- Historical balance-sheet trend calculations.
-- UI drill-downs that explain which SEC concept supplied each historical value.
-- Stronger handling of restatements and duplicate annual facts.
+## Current Design Rules
 
-### 2. Historical price data
+- Keep the app local-first.
+- Keep private data out of GitHub.
+- Keep one active launch path.
+- Avoid unused wrapper UI files.
+- Avoid stacking messy one-off UI files.
+- Make the visible workflow follow the Research Guide.
+- Keep raw/bulk data views grouped under `Data Details`.
+- Keep readable screening views separate from raw data tables.
+- Do not fake missing financial data.
+- If data is partial, stale, unavailable, or currency-distorted, mark it clearly.
+- Do not turn the app into broker integration, auto-trading, or buy/sell recommendations.
 
-Partially added: the app now pulls Finnhub daily candles during Finnhub/full pipeline refreshes, falls back to Yahoo Chart when Finnhub candles are unavailable, stores daily rows in `price_history`, and derives `price_metrics`.
+## Still Needs To Be Done
 
-Still needed:
+### 1. Clean code structure
 
-- Better adjusted-close support if a provider exposes split/dividend-adjusted series separately.
-- Charting or sparkline UI for price history.
-- More configurable price trend windows.
-- Optional second fallback price provider if both Finnhub and Yahoo Chart coverage are unavailable or rate-limited.
+The active app currently uses a streamlined launch path in `main.py` that subclasses the base UI. This works, but the long-term cleanup should be to move the streamlined UI code into a proper module and remove dead/unused UI paths.
 
-### 3. Better foreign issuer handling
+Needed:
 
-Foreign issuers such as TSM can report differently than U.S. domestic filers.
+- Keep only one real app window class.
+- Move active UI customization out of `main.py` once stable.
+- Remove old visible-button logic from base UI if it is no longer used.
+- Keep `main.py` small: import the app class and launch it.
+- Confirm there are no unused wrapper files.
 
-Needed additions:
+### 2. UI polish
 
-- More IFRS concept mappings.
-- Better handling for companies reporting in non-USD currencies.
-- Currency normalization or explicit currency warnings.
-- ADR/share-count conversion awareness.
-- Clear warnings when SEC data is partial because of foreign issuer reporting differences.
-- Better disclosure notes for partial SBC, R&D, and SG&A coverage.
+Needed:
 
-### 4. Stronger data quality system
+- Make workflow tabs auto-size cleanly at different window widths.
+- Keep tab names readable without clipping.
+- Improve table column sizing presets.
+- Save column widths.
+- Save useful layout preferences without fighting the Research Guide workflow order.
+- Improve loading/progress indicators during long full-pipeline runs.
+- Improve error messages when API pulls fail.
+- Make confirmation dialogs readable in dark mode without breaking launch.
 
-Partially added: the app now has a Data Quality view that checks key screening fields, freshness, source category, missing/partial/stale status, and suggested repair actions.
+### 3. Data quality and transparency
 
-Still needed:
+Needed:
 
 - Per-field source confidence.
 - Per-field source priority rules.
-- UI filter for tickers with weak or incomplete data.
-- Data-quality summary score by ticker.
-- Better distinction between calculated, derived, estimated, and directly reported values.
+- Better distinction between reported, calculated, derived, estimated, and missing values.
+- Better UI filtering for weak/incomplete data.
+- More detailed data-quality summary by ticker.
+- More explicit warnings for non-USD SEC units and ADR/foreign issuer issues.
 
-### 5. Better scoring transparency
+### 4. Historical fundamentals
 
-Partially added: the app now has a Score Details view with component scores, weights, weighted points, flags, and readable input/rationale text.
+Partially added: `historical_fundamentals` is rebuilt from SEC annual companyfacts rows.
 
 Still needed:
 
-- Add drill-down views for valuation, quality, balance sheet, dilution, and FCF scores.
-- Add scoring version labels so future model changes are trackable.
-- Add detailed rule-by-rule point attribution for each score component.
+- More complete balance-sheet history where SEC coverage is partial.
+- Historical balance-sheet trend calculations.
+- Drill-downs showing which SEC concept supplied each historical value.
+- Stronger restatement/duplicate annual fact handling.
 
-### 6. Peer group improvements
+### 5. Historical price data
 
-Peer comparison is useful, but still needs refinement.
+Partially added: daily price candles are stored in `price_history`, and derived metrics are stored in `price_metrics`.
 
-Needed additions:
+Still needed:
+
+- Better adjusted-close support.
+- Charting or sparkline UI.
+- More configurable trend windows.
+- Optional second fallback provider if Finnhub and Yahoo are unavailable or rate-limited.
+
+### 6. Foreign issuer handling
+
+Needed:
+
+- More IFRS concept mappings.
+- Better handling of non-USD reporting.
+- Currency normalization or stronger currency warnings.
+- ADR/share-count conversion awareness.
+- Better disclosure notes for partial SBC, R&D, SG&A, and share-count coverage.
+
+### 7. Scoring transparency
+
+Partially added: Score Details explains component scores and rationale.
+
+Still needed:
+
+- Scoring version labels.
+- Rule-by-rule point attribution.
+- More detailed drill-downs for valuation, quality, balance sheet, dilution, and FCF.
+
+### 8. Peer group improvements
+
+Needed:
 
 - Better default peer-group templates.
 - Peer-group editor.
 - Automatic peer suggestions.
-- Peer median and percentile ranks for more fields.
-- Outlier detection so one bad peer does not distort the comparison.
-- Option to exclude specific peers from a comparison.
+- More peer median and percentile ranks.
+- Outlier detection.
+- Option to exclude specific peers from comparison.
 
-### 7. Dashboard and UI improvements
+### 9. Privacy hardening
 
-Partially added: the app now has a richer Overview HUD, color-coded score/flag surfaces, improved table selection behavior, slimmer scrollbars, and cleaner tab styling.
+Needed:
 
-Still needed:
-
-- Better sticky/frozen ticker column implementation.
-- Cleaner handling of large empty table space.
-- Better table column sizing presets.
-- Saved column widths.
-- Saved layout preferences.
-- Better selected-row styling.
-- Better detail panel layout.
-- Better loading/progress indicators during full pipeline runs.
-- Cleaner error messages when API pulls fail.
-
-### 8. Local settings and privacy hardening
-
-The app should stay local-first and avoid pushing private data to GitHub.
-
-Needed additions:
-
-- Confirm `tech_screener.db` remains ignored by Git.
-- Confirm all local settings files are ignored by Git.
-- Add a setup check that warns if private local files are accidentally tracked.
+- Startup check that warns if private local files are accidentally tracked by Git.
+- Confirm `.db`, cache, log, build, and virtual environment files remain ignored.
 - Optional local settings export/import.
-- Better API-key masking in the UI.
+- Better API-key masking.
 
-### 9. Testing and verification
+### 10. Testing and release workflow
 
-The project needs tests before heavier refactors.
-
-Needed additions:
+Needed:
 
 - Unit tests for SEC concept mapping.
 - Unit tests for Finnhub response mapping.
@@ -198,15 +255,6 @@ Needed additions:
 - Unit tests for peer comparison.
 - Regression tests for foreign issuers such as TSM.
 - Smoke test for launching the PySide app.
-
-### 10. Packaging and release workflow
-
-The app still needs a cleaner install/run process.
-
-Needed additions:
-
-- Clear setup instructions.
-- Clear `.env` or local-settings guidance if used later.
 - Windows launch script.
 - Optional packaged desktop build.
 - Versioned releases.
@@ -214,7 +262,7 @@ Needed additions:
 
 ## Do Not Add Yet
 
-These should not be added until the data pipeline and scoring are more stable:
+Do not add these until the data pipeline and scoring are more stable:
 
 - Automated buy/sell recommendations.
 - Broker integration.
@@ -233,21 +281,34 @@ Future work should follow these rules:
 - Do not delete, move, rename, or rewrite files without first classifying them.
 - Keep local data, API keys, databases, caches, logs, virtual environments, and generated outputs out of Git.
 - If a generated or local-only file is already tracked, remove it from Git tracking with `git rm --cached <file>` instead of deleting the local file.
-- Do not fake missing financial data.
-- If data is partial, stale, or unavailable, mark it clearly.
+- Do not claim a change is complete unless it was committed and verified.
+- If search returns nothing, verify another way.
 - Keep raw API/cache views separate from readable screening views.
 
-## Baseline
+## Run Locally
 
-This repository is the starting baseline for the project.
+From the repo folder:
 
-Future work should be developed from this point forward using Git commits for meaningful changes and tags for stable save points.
+```bash
+python main.py
+```
 
-Recommended workflow:
+Typical update flow:
+
+```bash
+git pull origin main
+python main.py
+```
+
+## Baseline / Save Points
+
+Use commits for meaningful changes and tags for stable checkpoints.
+
+Recommended checkpoint workflow:
 
 ```bash
 git status
 git add .
-git commit -m "Save baseline"
-git tag v1
+git commit -m "Describe the stable change"
+git tag v1.x
 ```
