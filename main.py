@@ -54,8 +54,6 @@ SEC_USER_AGENT_HELP = (
     "Required by the SEC request policy; saved locally only."
 )
 
-EXTRA_PEER_GROUPS: list[str] = []
-
 GATE_FOOTER = (
     "\n\n--- Gate Result ---\n"
     "Gate result: Continue / Needs Proof / Pass For Now\n"
@@ -68,7 +66,7 @@ GATE_FOOTER = (
 
 def merged_peer_groups() -> list[str]:
     groups: list[str] = []
-    for group in [*DEFAULT_PEER_GROUPS, *EXTRA_PEER_GROUPS]:
+    for group in DEFAULT_PEER_GROUPS:
         if group not in groups:
             groups.append(group)
     return groups
@@ -118,17 +116,6 @@ class StreamlinedMainWindow(MainWindow):
                     ("Overview", existing_tabs.get("Overview")),
                     ("Master Watchlist", existing_tabs.get("Master Watchlist")),
                     ("Data Quality", existing_tabs.get("Data Quality")),
-                    (
-                        "Funnel Result",
-                        self.make_gate_panel(
-                            "0. Sector Funnel Result",
-                            "Decide whether this ticker deserves more time inside this sector.",
-                            "Sector/theme I am testing:\n"
-                            "Why I believe this sector should improve:\n"
-                            "Ticker being tested:\n"
-                            "Screen note:\n",
-                        ),
-                    ),
                 ],
             ),
             "0. Sector Funnel",
@@ -390,9 +377,7 @@ class StreamlinedMainWindow(MainWindow):
         title.setAlignment(Qt.AlignCenter)
         title.setWordWrap(True)
 
-        subtitle = QLabel(
-            "Local watchlist, SEC data, Finnhub data, price history, peer groups, and scoring status."
-        )
+        subtitle = QLabel("Local watchlist, SEC data, Finnhub data, price history, peer groups, and scoring status.")
         subtitle.setObjectName("HeroSubtitle")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setWordWrap(True)
@@ -608,11 +593,7 @@ class StreamlinedMainWindow(MainWindow):
         key = self.finnhub_api_key.text().strip()
 
         if not ua or "@" not in ua:
-            QMessageBox.warning(
-                self,
-                "SEC User-Agent required",
-                "Enter it as: Your Name your-email@example.com",
-            )
+            QMessageBox.warning(self, "SEC User-Agent required", "Enter it as: Your Name your-email@example.com")
             return
         if not key:
             QMessageBox.warning(self, "Finnhub API key required", "Paste your Finnhub API key before running the full pipeline.")
