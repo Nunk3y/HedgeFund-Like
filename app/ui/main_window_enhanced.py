@@ -37,6 +37,38 @@ from app.ui.main_window import (
     polish_table,
 )
 
+DIALOG_STYLE = """
+QMessageBox {
+    background-color: #081424;
+    color: #f8fafc;
+    font-family: Segoe UI, Inter, Arial;
+    font-size: 10pt;
+}
+QMessageBox QLabel {
+    color: #f8fafc;
+    font-size: 11pt;
+    font-weight: 700;
+    min-width: 440px;
+}
+QMessageBox QPushButton {
+    background-color: #0b1728;
+    color: #ffffff;
+    border: 1px solid #5aa6ff;
+    border-radius: 10px;
+    padding: 10px 22px;
+    min-width: 92px;
+    min-height: 34px;
+    font-weight: 900;
+}
+QMessageBox QPushButton:hover {
+    background-color: #173557;
+    border: 1px solid #93c5fd;
+}
+QMessageBox QPushButton:pressed {
+    background-color: #050914;
+}
+"""
+
 EXTRA_PEER_GROUPS = [
     "AI Servers / Data Center Hardware",
     "Data Center Networking",
@@ -78,6 +110,30 @@ def merged_peer_groups() -> list[str]:
         if group not in groups:
             groups.append(group)
     return groups
+
+
+def readable_warning(parent: QWidget, title: str, text: str) -> None:
+    box = QMessageBox(parent)
+    box.setIcon(QMessageBox.Warning)
+    box.setWindowTitle(title)
+    box.setText(text)
+    box.setStandardButtons(QMessageBox.Ok)
+    box.setDefaultButton(QMessageBox.Ok)
+    box.setStyleSheet(DIALOG_STYLE)
+    box.exec()
+
+
+def readable_question(parent: QWidget, title: str, text: str, informative_text: str = "") -> bool:
+    box = QMessageBox(parent)
+    box.setIcon(QMessageBox.Question)
+    box.setWindowTitle(title)
+    box.setText(text)
+    if informative_text:
+        box.setInformativeText(informative_text)
+    box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+    box.setDefaultButton(QMessageBox.No)
+    box.setStyleSheet(DIALOG_STYLE)
+    return box.exec() == QMessageBox.Yes
 
 
 class EnhancedMainWindow(MainWindow):
@@ -185,29 +241,28 @@ class EnhancedMainWindow(MainWindow):
         ua = self.sec_user_agent.text().strip()
         key = self.finnhub_api_key.text().strip()
         if not ua or "@" not in ua:
-            QMessageBox.warning(
+            readable_warning(
                 self,
                 "SEC User-Agent required",
                 "Enter your name and email in the SEC User-Agent field. It is saved only in your local database.",
             )
             return
         if not key:
-            QMessageBox.warning(self, "Finnhub API key required", "Paste your Finnhub API key before running the full pipeline.")
+            readable_warning(self, "Finnhub API key required", "Paste your Finnhub API key before running the full pipeline.")
             return
 
         rows = self.active_ticker_rows()
         if not rows:
-            QMessageBox.warning(self, "No active tickers", "No active tickers were found in the watchlist.")
+            readable_warning(self, "No active tickers", "No active tickers were found in the watchlist.")
             return
 
-        result = QMessageBox.question(
+        confirmed = readable_question(
             self,
             "Run all active tickers",
             f"Run the full SEC + Finnhub + price-history pipeline for {len(rows)} active tickers?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            "This may take a while. The app will update the progress text as it works.",
         )
-        if result != QMessageBox.Yes:
+        if not confirmed:
             return
 
         self.save_api_settings()
@@ -282,7 +337,7 @@ class EnhancedMainWindow(MainWindow):
     def add_ticker_clicked(self) -> None:
         ticker = self.ticker_input.text().strip().upper()
         if not ticker:
-            QMessageBox.warning(self, "Missing ticker", "Enter a ticker.")
+            readable_warning(self, "Missing ticker", "Enter a ticker.")
             return
         peer_group = self.peer_group_input.currentText().strip()
         add_ticker(ticker, self.company_input.text().strip(), peer_group, peer_group, "")
@@ -297,16 +352,15 @@ class EnhancedMainWindow(MainWindow):
     def delete_selected_ticker_clicked(self) -> None:
         ticker = self.current_ticker()
         if not ticker:
-            QMessageBox.warning(self, "No ticker selected", "Select a ticker from the watchlist first.")
+            readable_warning(self, "No ticker selected", "Select a ticker from the watchlist first.")
             return
-        result = QMessageBox.question(
+        confirmed = readable_question(
             self,
             "Delete ticker",
-            f"Delete {ticker} from the watchlist and remove its cached local data?",
-            QMessageBox.Yes | QMessageBox.No,
-            QMessageBox.No,
+            f"Delete {ticker} from the watchlist?",
+            "This will also remove cached local data for this ticker. This does not affect GitHub.",
         )
-        if result != QMessageBox.Yes:
+        if not confirmed:
             return
         delete_ticker(ticker, delete_cached_data=True)
         self.selected_ticker = None
