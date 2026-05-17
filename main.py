@@ -6,6 +6,7 @@ from PySide6.QtWidgets import (
     QComboBox,
     QFormLayout,
     QGridLayout,
+    QHBoxLayout,
     QLabel,
     QLineEdit,
     QMessageBox,
@@ -36,8 +37,10 @@ from app.db.database import (
 from app.services.finnhub_service import refresh_finnhub_rows
 from app.services.historical_data_service import rebuild_historical_fundamentals_for_ticker
 from app.services.market_data_service import normalize_market_data_for_ticker
+from app.services.peer_service import list_peer_comparison
 from app.services.readiness_service import calculate_model_readiness_for_ticker
 from app.services.sec_service import refresh_sec_rows
+from app.services.watchlist_service import list_master_watchlist
 from app.ui.main_window import (
     DARK_STYLE,
     DEFAULT_PEER_GROUPS,
@@ -121,20 +124,7 @@ class StreamlinedMainWindow(MainWindow):
             "0. Sector Funnel",
         )
 
-        self.center_tabs.addTab(
-            self.make_gate_panel(
-                "1. Flag Review",
-                "Start here after a ticker is flagged. Understand why the app selected it before doing manual research.",
-                "Ticker flagged:\n"
-                "Flag/bucket from app: Deep Dive / Watch / Needs Data / Pass\n"
-                "Reason the app flagged it:\n"
-                "Strongest app signal: score / data quality / peer rank / valuation / FCF / balance sheet / momentum\n"
-                "Weakest app signal:\n"
-                "Is the flag based on clean data: Yes / No / Unsure\n"
-                "What I need to verify before spending more time:\n",
-            ),
-            "1. Flag Review",
-        )
+        self.center_tabs.addTab(self.make_auto_flag_review_panel(), "1. Flag Review")
 
         self.center_tabs.addTab(
             self.make_nested_tab_panel(
@@ -297,6 +287,149 @@ class StreamlinedMainWindow(MainWindow):
 
         if self.center_tabs.count() > 0:
             self.center_tabs.setCurrentIndex(0)
+
+    def make_auto_flag_review_panel(self) -> QWidget:
+        panel = QWidget()
+        panel.setObjectName("DataPanel")
+        layout = QVBoxLayout(panel)
+        layout.setContentsMargins(18, 18, 18, 18)
+        layout.setSpacing(10)
+
+        title = QLabel("1. Flag Review")
+        title.setObjectName("PanelTitle")
+        hint = QLabel("Enter the ticker you are deep diving. The app drafts this gate from local screener, score, peer, and data-quality outputs.")
+        hint.setObjectName("PanelHint")
+        hint.setWordWrap(True)
+
+        input_row = QHBoxLayout()
+        self.flag_review_ticker_input = QLineEdit()
+        self.flag_review_ticker_input.setPlaceholderText("Ticker to deep dive, e.g. QCOM")
+        self.flag_review_ticker_input.returnPressed.connect(self.autofill_flag_review)
+        button = QPushButton("Answer Flag Review")
+        button.setObjectName("PrimaryButton")
+        button.setCursor(Qt.PointingHandCursor)
+        button.clicked.connect(self.autofill_flag_review)
+        input_row.addWidget(self.flag_review_ticker_input, 1)
+        input_row.addWidget(button)
+
+        self.flag_review_editor = QTextEdit()
+        self.flag_review_editor.setObjectName("Hud")
+        self.flag_review_editor.setPlainText(
+            "Enter a ticker above, then click Answer Flag Review.\n\n"
+            "The draft uses only local app data. If the ticker has not run through the full pipeline yet, run the pipeline first."
+        )
+
+        layout.addWidget(title)
+        layout.addWidget(hint)
+        layout.addLayout(input_row)
+        layout.addWidget(self.flag_review_editor, 1)
+        return panel
+
+    def autofill_flag_review(self) -> None:
+        ticker = self.flag_review_ticker_input.text().strip().upper()
+        if not ticker:
+            ticker = self.current_ticker() or ""
+        if not ticker:
+            QMessageBox.warning(self, "Missing ticker", "Enter a ticker or select one from the watchlist.")
+            return
+        self.flag_review_ticker_input.setText(ticker)
+        self.flag_review_editor.setPlainText(self.build_flag_review_answer(ticker))
+
+    def build_flag_review_answer(self, ticker: str) -> str:
+        ticker = ticker.strip().upper()
+        watch_row = self.find_local_row(list_master_watchlist(), ticker)
+        peer_row = self.find_local_row(list_peer_comparison(), ticker)
+
+        if not watch_row:
+            return (
+                f"Ticker flagged: {ticker}\n"
+                "Flag/bucket from app: Not found in current local screener output\n"
+                "Reason the app flagged it: Not available yet.\n"
+                "Strongest app signal: Not available.\n"
+                "Weakest app signal: Not available.\n"
+                "Is the flag based on clean data: No / Unsure\n"
+                "What I need to verify before spending more time: Add the ticker, assign the correct peer group, then run the full pipeline.\n"
+                f"{GATE_FOOTER}"
+            )
+
+        score_fields = [
+            "Quality Score",
+            "Valuation Score",
+            "Balance Score",
+            "Dilution Score",
+            "FCF Score",
+            "Data Score",
+        ]
+        scored = []
+        for field in score_fields:
+            try:
+                scored.append((field, int(float(str(watch_row.get(field, "0") or "0")))))
+            except Exception:
+                scored.append((field, 0))
+        strongest_field, strongest_score = max(scored, key=lambda item: item[1])
+        weakest_field, weakest_score = min(scored, key=lambda item: item[1])
+
+        data_flag = watch_row.get("Data Confidence Flag", "")
+        data_score = int(float(str(watch_row.get("Data Score", "0") or "0")))
+        clean_data = "Yes" if data_flag.startswith("GREEN") or data_score >= 80 else "Unsure" if data_score >= 60 else "No"
+
+        peer_note = "No peer comparison row found."
+        if peer_row:
+            peer_note = (
+                f"Peer setup: {peer_row.get('Overall Peer Flag', '')}; "
+                f"valuation: {peer_row.get('Relative Valuation Flag', '')}; "
+                f"quality: {peer_row.get('Relative Quality Flag', '')}; "
+                f"balance: {peer_row.get('Relative Balance Flag', '')}."
+            )
+
+        flag = watch_row.get("Overall Flag", "")
+        rank = watch_row.get("Final Rank", "")
+        action = watch_row.get("Deep Dive Action", "")
+        score = watch_row.get("Score", "")
+        weak_areas = watch_row.get("Missing / Weak Areas", "") or "None listed."
+        next_action = watch_row.get("Next Action", "") or "Review the next gate."
+
+        reason_parts = [
+            f"Final rank is {rank} with score {score}.",
+            f"Overall flag is {flag}.",
+            f"Quality flag: {watch_row.get('Quality Flag', '')}.",
+            f"Valuation flag: {watch_row.get('Valuation Flag', '')}.",
+            f"Balance sheet flag: {watch_row.get('Balance Sheet Flag', '')}.",
+            f"Dilution flag: {watch_row.get('Dilution Flag', '')}.",
+            peer_note,
+        ]
+
+        if str(rank).startswith("A") or str(action).lower().startswith("deep") or str(flag).startswith("GREEN"):
+            gate_result = "Continue"
+            proof_line = "Move to Numbers Gate and verify the score is supported by the underlying financials."
+        elif str(flag).startswith("GRAY") or "NEEDS DATA" in str(rank).upper():
+            gate_result = "Needs Proof"
+            proof_line = "Fix missing or weak data before spending manual research time."
+        elif str(flag).startswith("RED"):
+            gate_result = "Pass For Now"
+            proof_line = "The screener flag is weak. Only continue if you have a specific external reason the app data is missing."
+        else:
+            gate_result = "Needs Proof"
+            proof_line = "Continue only if the next gate explains the weak or mixed signal."
+
+        return (
+            f"Ticker flagged: {ticker}\n"
+            f"Flag/bucket from app: {rank} / {action}\n"
+            f"Reason the app flagged it: {' '.join(reason_parts)}\n"
+            f"Strongest app signal: {strongest_field} at {strongest_score}.\n"
+            f"Weakest app signal: {weakest_field} at {weakest_score}.\n"
+            f"Is the flag based on clean data: {clean_data}\n"
+            f"What I need to verify before spending more time: {next_action} Missing/weak areas: {weak_areas}\n"
+            "\n--- Gate Result ---\n"
+            f"Gate result: {gate_result}\n"
+            f"Proof needed or reason to pass for now: {proof_line}\n"
+        )
+
+    def find_local_row(self, rows: list[dict], ticker: str) -> dict | None:
+        for row in rows:
+            if str(row.get("Ticker", "")).strip().upper() == ticker:
+                return row
+        return None
 
     def make_nested_tab_panel(self, title_text: str, hint_text: str, tabs: list[tuple[str, QWidget | None]]) -> QWidget:
         panel = QWidget()
