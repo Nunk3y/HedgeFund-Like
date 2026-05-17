@@ -124,12 +124,28 @@ class StreamlinedMainWindow(MainWindow):
         self.hide_top_nav_buttons()
         self.group_bulk_data_tabs()
         self.apply_research_guide_tab_order()
+        self.expand_tab_labels()
         self.update_active_tab_header()
 
     def hide_top_nav_buttons(self) -> None:
         for button in self.findChildren(QPushButton):
             if button.objectName() == "NavButton":
                 button.hide()
+
+    def expand_tab_labels(self) -> None:
+        for tabs in self.findChildren(QTabWidget):
+            tabs.setUsesScrollButtons(True)
+            tabs.setElideMode(Qt.ElideNone)
+            tab_bar = tabs.tabBar()
+            tab_bar.setExpanding(False)
+            for index in range(tabs.count()):
+                text = tabs.tabText(index)
+                tab_bar.setTabToolTip(index, text)
+                width = max(120, tab_bar.fontMetrics().horizontalAdvance(text) + 44)
+                tab_bar.setTabData(index, width)
+            tab_bar.setStyleSheet(
+                "QTabBar::tab { min-width: 120px; padding-left: 18px; padding-right: 18px; }"
+            )
 
     def apply_research_guide_tab_order(self) -> None:
         if not hasattr(self, "center_tabs"):
