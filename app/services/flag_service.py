@@ -12,10 +12,22 @@ def safe_float(value) -> Optional[float]:
         return None
 
 
+def is_not_ready(readiness: str) -> bool:
+    return "NOT MODEL READY" in readiness or "NOT SCREEN READY" in readiness
+
+
+def is_partial_or_pre_revenue(readiness: str) -> bool:
+    return (
+        "PARTIAL MODEL ONLY" in readiness
+        or "PARTIAL COMPARISON ONLY" in readiness
+        or "PRE-REVENUE" in readiness
+    )
+
+
 def flag_data_confidence(readiness: str | None, missing: str | None) -> str:
     readiness = readiness or ""
     missing = missing or ""
-    if "NOT MODEL READY" in readiness:
+    if is_not_ready(readiness):
         return "GRAY — Insufficient Data"
     if "Missing:" in missing and any(x in missing for x in ["Price", "Market cap", "Shares", "Cash", "Debt"]):
         return "GRAY — Core Data Missing"
@@ -84,7 +96,7 @@ def flag_valuation(market_cap, enterprise_value, revenue, fcf, pe_ratio, readine
     pe = safe_float(pe_ratio)
     readiness = readiness or ""
 
-    if "PARTIAL MODEL ONLY" in readiness:
+    if is_partial_or_pre_revenue(readiness):
         return "PURPLE — Normal Valuation Weak"
 
     # Use rough absolute guards until peer medians exist.
@@ -162,10 +174,10 @@ def flag_overall(readiness, data_flag, valuation_flag, quality_flag, balance_fla
     missing_weak = missing_weak or ""
 
     flags = [data_flag, valuation_flag, quality_flag, balance_flag, dilution_flag]
-    if any(f.startswith("GRAY") for f in flags) and "PARTIAL MODEL ONLY" not in readiness:
+    if any(f.startswith("GRAY") for f in flags) and not is_partial_or_pre_revenue(readiness):
         return "GRAY — Insufficient Data"
 
-    if "pre-revenue" in missing_weak.lower() or "PARTIAL MODEL ONLY" in readiness:
+    if "pre-revenue" in missing_weak.lower() or is_partial_or_pre_revenue(readiness):
         if balance_flag.startswith("GREEN") or balance_flag.startswith("YELLOW"):
             return "PURPLE — Speculative Catalyst Only"
         return "RED — Speculative / Weak Balance Sheet"

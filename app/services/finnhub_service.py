@@ -66,6 +66,52 @@ def refresh_finnhub_rows(ticker: str, api_key: str) -> list[dict]:
     return rows
 
 
+def refresh_finnhub_price_history(ticker: str, api_key: str, lookback_years: int = 3) -> list[dict]:
+    ticker = ticker.upper().strip()
+    lookback_years = max(1, min(int(lookback_years or 3), 10))
+    to_ts = int(time.time())
+    from_ts = to_ts - (lookback_years * 365 * 24 * 60 * 60)
+    data = get_json(
+        "/stock/candle",
+        {"symbol": ticker, "resolution": "D", "from": from_ts, "to": to_ts},
+        api_key,
+    )
+
+    status = str(data.get("s", "")).lower() if isinstance(data, dict) else ""
+    if status in {"no_data", "no_data."}:
+        return []
+    if status and status != "ok":
+        raise RuntimeError(f"Finnhub candle response status for {ticker}: {status}")
+
+    timestamps = data.get("t", []) if isinstance(data, dict) else []
+    opens = data.get("o", []) if isinstance(data, dict) else []
+    highs = data.get("h", []) if isinstance(data, dict) else []
+    lows = data.get("l", []) if isinstance(data, dict) else []
+    closes = data.get("c", []) if isinstance(data, dict) else []
+    volumes = data.get("v", []) if isinstance(data, dict) else []
+
+    rows = []
+    for idx, stamp in enumerate(timestamps):
+        try:
+            trade_date = dt.datetime.fromtimestamp(int(stamp), tz=dt.timezone.utc).date().isoformat()
+        except Exception:
+            continue
+
+        close = closes[idx] if idx < len(closes) else None
+        rows.append({
+            "ticker": ticker,
+            "trade_date": trade_date,
+            "open": opens[idx] if idx < len(opens) else None,
+            "high": highs[idx] if idx < len(highs) else None,
+            "low": lows[idx] if idx < len(lows) else None,
+            "close": close,
+            "adjusted_close": close,
+            "volume": volumes[idx] if idx < len(volumes) else None,
+            "source": "FINNHUB",
+        })
+    return rows
+
+
 def make_row(ticker: str, now: str, endpoint: str, field: str, value, status: str, err: str, notes: str) -> dict:
     return {
         "Ticker": ticker,

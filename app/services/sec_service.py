@@ -111,7 +111,17 @@ FALLBACK_CONCEPT_RULES = {
 }
 
 INSTANT_FIELDS = {"cash_and_equivalents", "current_assets", "current_liabilities", "total_assets", "total_equity", "debt_current", "debt_noncurrent"}
-HISTORICAL_FIELDS = ["revenue", "gross_profit", "cost_of_revenue", "operating_income", "net_income", "eps_basic", "eps_diluted", "research_and_development", "selling_general_admin", "share_based_compensation", "operating_cash_flow", "capital_expenditures", "depreciation_amortization", "shares_basic", "shares_diluted"]
+INCOME_CASH_FLOW_HISTORY_FIELDS = [
+    "revenue", "gross_profit", "cost_of_revenue", "operating_income", "net_income",
+    "eps_basic", "eps_diluted", "research_and_development", "selling_general_admin",
+    "share_based_compensation", "operating_cash_flow", "capital_expenditures",
+    "depreciation_amortization", "shares_basic", "shares_diluted",
+]
+BALANCE_SHEET_HISTORY_FIELDS = [
+    "cash_and_equivalents", "current_assets", "current_liabilities",
+    "total_equity", "debt_current", "debt_noncurrent",
+]
+HISTORICAL_FIELDS = INCOME_CASH_FLOW_HISTORY_FIELDS + BALANCE_SHEET_HISTORY_FIELDS
 
 
 @dataclass(frozen=True)

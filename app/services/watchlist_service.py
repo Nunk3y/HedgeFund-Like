@@ -104,12 +104,12 @@ def clamp_score(value: float) -> int:
 def score_data(readiness: str | None, source_status: str | None) -> int:
     readiness = readiness or ""
     source_status = source_status or ""
-    if "MODEL READY" in readiness:
+    if "MODEL READY" in readiness or "READY FOR PEER COMPARISON" in readiness or "READY FOR DEEP-DIVE SCREENING" in readiness:
         return 100
-    if "PARTIAL" in readiness:
-        return 70
     if "PRE-REVENUE" in readiness:
         return 55
+    if "PARTIAL" in readiness:
+        return 70
     if source_status:
         return 45
     return 20
@@ -310,9 +310,33 @@ def final_score(data_score, quality_score, valuation_score, balance_score, dilut
     return clamp_score(score)
 
 
+def risk_adjusted_score(score: int, overall_flag: str) -> int:
+    if overall_flag.startswith("GREEN"):
+        return score
+    if overall_flag.startswith("YELLOW"):
+        return min(score, 74)
+    if overall_flag.startswith("PURPLE"):
+        return min(score, 64)
+    if overall_flag.startswith("RED"):
+        return min(score, 49)
+    if overall_flag.startswith("GRAY"):
+        return min(score, 39)
+    return score
+
+
 def rank_label(score: int, overall_flag: str) -> str:
     if overall_flag.startswith("GRAY"):
         return "NEEDS DATA"
+    if overall_flag.startswith("RED"):
+        return "D — Skip / Too Weak"
+    if overall_flag.startswith("PURPLE"):
+        return "SPECULATIVE — Catalyst Only"
+    if overall_flag.startswith("YELLOW"):
+        if score >= 65:
+            return "B — Watch Closely"
+        if score >= 50:
+            return "C — Monitor"
+        return "D — Low Priority"
     if score >= 80:
         return "A — Deep Dive"
     if score >= 65:
@@ -331,9 +355,21 @@ def list_master_watchlist():
             mr.readiness,
             mr.next_action,
             mr.missing_weak_areas,
-            mr.core_data_score
+            mr.core_data_score,
+            pm.last_trade_date AS price_last_trade_date,
+            pm.return_1m AS price_return_1m,
+            pm.return_3m AS price_return_3m,
+            pm.return_6m AS price_return_6m,
+            pm.return_1y AS price_return_1y,
+            pm.return_3y AS price_return_3y,
+            pm.pct_from_52w_high AS price_pct_from_52w_high,
+            pm.volatility_90d AS price_volatility_90d,
+            pm.momentum_flag AS price_momentum_flag,
+            pm.drawdown_flag AS price_drawdown_flag,
+            pm.volatility_flag AS price_volatility_flag
         FROM market_data md
         LEFT JOIN model_readiness mr ON mr.ticker = md.ticker
+        LEFT JOIN price_metrics pm ON pm.ticker = md.ticker
         ORDER BY md.ticker
         """
     ).fetchall()
@@ -362,12 +398,14 @@ def list_master_watchlist():
         balance_score = score_balance_sheet(r["cash_raw"], r["debt_raw"], r["current_ratio"], fcf)
         dilution_score = score_dilution(r["dilution_1y"], r["dilution_3y"], r["sbc_raw"], r["revenue_raw"])
         fcf_score = score_fcf(fcf, r["revenue_raw"])
-        total_score = final_score(data_score, quality_score, valuation_score, balance_score, dilution_score, fcf_score)
+        raw_score = final_score(data_score, quality_score, valuation_score, balance_score, dilution_score, fcf_score)
+        total_score = risk_adjusted_score(raw_score, overall_flag)
 
         out.append({
             "Ticker": r["ticker"],
             "Final Rank": rank_label(total_score, overall_flag),
             "Score": str(total_score),
+            "Raw Score": str(raw_score),
             "Quality Score": str(quality_score),
             "Valuation Score": str(valuation_score),
             "Balance Score": str(balance_score),
@@ -403,6 +441,17 @@ def list_master_watchlist():
             "Beta": "" if r["beta"] is None else f"{float(r['beta']):,.2f}",
             "52W High": fmt_price(r["high_52w"]),
             "52W Low": fmt_price(r["low_52w"]),
+            "Momentum Flag": r["price_momentum_flag"] or "",
+            "Drawdown Flag": r["price_drawdown_flag"] or "",
+            "Volatility Flag": r["price_volatility_flag"] or "",
+            "1M Return": fmt_percent(r["price_return_1m"]),
+            "3M Return": fmt_percent(r["price_return_3m"]),
+            "6M Return": fmt_percent(r["price_return_6m"]),
+            "1Y Return": fmt_percent(r["price_return_1y"]),
+            "3Y Return": fmt_percent(r["price_return_3y"]),
+            "From 52W High": fmt_percent(r["price_pct_from_52w_high"]),
+            "90D Volatility": fmt_percent(r["price_volatility_90d"]),
+            "Price Data Through": r["price_last_trade_date"] or "",
             "Cash Runway": "" if cash_runway is None else f"{cash_runway:,.2f} yrs",
             "Readiness": r["readiness"] or "",
             "Next Action": r["next_action"] or "",

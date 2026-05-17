@@ -31,12 +31,26 @@ The app currently supports:
 - API Cache view.
 - Market Data view.
 - Model Readiness view.
+- Dedicated historical fundamentals table populated from SEC annual companyfacts rows.
+- Finnhub daily candle pull with local price-history storage.
+- Yahoo Chart fallback for daily price history when the Finnhub candle endpoint is unavailable or not included with the saved key.
+- Standalone SEC-history rebuild and price-history refresh actions.
+- Repair Missing Data action that rebuilds cached SEC history, recalculates existing price metrics, refreshes Finnhub price history when an API key is available, then renormalizes market data and readiness.
+- Price Trend view with 52-week high/low, returns, drawdown, momentum, and volatility metrics.
+- Historical Fundamentals and Price History UI views.
+- Score Details view that explains each ticker's data, quality, valuation, balance-sheet, dilution, and FCF scores.
+- Color-coded score and flag cells so high-potential, watchlist, warning, and weak names are easier to scan.
+- Data Quality view that marks key fields as complete, partial, stale, or missing with suggested repair actions.
+- Data Quality warning for non-USD SEC units that can distort valuation multiples for foreign issuers.
 - High-level valuation, quality, balance sheet, dilution, FCF, and data-confidence flags.
 - Partial support for foreign issuers using IFRS SEC companyfacts.
 - DEI share-count fallback for historical dilution when standard share concepts are incomplete.
 - Larger custom scrollbars.
 - Dark premium dashboard UI.
 - Functional top navigation.
+- Slimmer polished scrollbars and cleaner tab button styling.
+- Draggable workspace tabs with locally saved custom tab order.
+- Polished HTML Overview HUD with colored signal tiles, score badges, decision buckets, and research alerts.
 - A ticker label in wide tables so row context is easier to track while horizontally scrolling.
 
 ## Planned Workflow
@@ -52,6 +66,8 @@ The app currently supports:
 9. Review the ticker in the Master Watchlist.
 10. Check flags and peer comparison.
 11. Decide whether the company deserves deeper manual research.
+
+If a view is empty after a data pull, use **Repair Missing Data**. It will use cached SEC rows first, then stored price candles, then Finnhub or the Yahoo Chart fallback when the missing view depends on price history that has never been downloaded.
 
 ## Intended End State
 
@@ -73,31 +89,25 @@ The finished app should help screen stocks by:
 
 ### 1. Proper historical data layer
 
-The app needs a dedicated historical-data model instead of relying only on latest normalized values and API-cache rows.
+Partially added: the app now has a dedicated `historical_fundamentals` table rebuilt from SEC annual companyfacts rows after SEC refreshes.
 
-Needed additions:
+Still needed:
 
-- Dedicated historical fundamentals table.
-- Dedicated historical price table.
-- Multi-year revenue, gross profit, operating income, net income, FCF, cash, debt, shares, and dilution history.
-- Historical growth-rate calculations.
-- Historical margin trend calculations.
+- More complete balance-sheet history where SEC companyfacts coverage is partial.
 - Historical balance-sheet trend calculations.
-- Clear separation between latest snapshot metrics and multi-year history.
+- UI drill-downs that explain which SEC concept supplied each historical value.
+- Stronger handling of restatements and duplicate annual facts.
 
 ### 2. Historical price data
 
-The app still needs real historical market-price support.
+Partially added: the app now pulls Finnhub daily candles during Finnhub/full pipeline refreshes, falls back to Yahoo Chart when Finnhub candles are unavailable, stores daily rows in `price_history`, and derives `price_metrics`.
 
-Needed additions:
+Still needed:
 
-- Finnhub daily candle pull.
-- Local storage for open, high, low, close, adjusted close, and volume.
-- Configurable lookback period.
-- 52-week and multi-year trend calculations from stored candles.
-- Price momentum flags.
-- Drawdown-from-high calculations.
-- Basic volatility calculations.
+- Better adjusted-close support if a provider exposes split/dividend-adjusted series separately.
+- Charting or sparkline UI for price history.
+- More configurable price trend windows.
+- Optional second fallback price provider if both Finnhub and Yahoo Chart coverage are unavailable or rate-limited.
 
 ### 3. Better foreign issuer handling
 
@@ -114,28 +124,25 @@ Needed additions:
 
 ### 4. Stronger data quality system
 
-The app needs a more formal data-quality layer.
+Partially added: the app now has a Data Quality view that checks key screening fields, freshness, source category, missing/partial/stale status, and suggested repair actions.
 
-Needed additions:
+Still needed:
 
 - Per-field source confidence.
-- Per-field freshness checks.
 - Per-field source priority rules.
-- Clear distinction between missing, partial, estimated, stale, and complete data.
 - UI filter for tickers with weak or incomplete data.
-- Data-quality summary by ticker.
+- Data-quality summary score by ticker.
+- Better distinction between calculated, derived, estimated, and directly reported values.
 
 ### 5. Better scoring transparency
 
-The current scoring should become easier to inspect and trust.
+Partially added: the app now has a Score Details view with component scores, weights, weighted points, flags, and readable input/rationale text.
 
-Needed additions:
+Still needed:
 
-- Explain how each score is calculated.
-- Show score inputs in the UI.
-- Show why each flag was assigned.
 - Add drill-down views for valuation, quality, balance sheet, dilution, and FCF scores.
 - Add scoring version labels so future model changes are trackable.
+- Add detailed rule-by-rule point attribution for each score component.
 
 ### 6. Peer group improvements
 
@@ -152,9 +159,9 @@ Needed additions:
 
 ### 7. Dashboard and UI improvements
 
-The UI has improved, but it still needs a more polished production-level table experience.
+Partially added: the app now has a richer Overview HUD, color-coded score/flag surfaces, improved table selection behavior, slimmer scrollbars, and cleaner tab styling.
 
-Needed additions:
+Still needed:
 
 - Better sticky/frozen ticker column implementation.
 - Cleaner handling of large empty table space.

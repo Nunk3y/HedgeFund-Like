@@ -171,6 +171,87 @@ def init_db() -> None:
     """)
 
     cur.execute("""
+    CREATE TABLE IF NOT EXISTS historical_fundamentals (
+        ticker TEXT NOT NULL,
+        fiscal_year INTEGER NOT NULL,
+        period TEXT,
+        filed TEXT,
+        form TEXT,
+        revenue_raw REAL,
+        gross_profit_raw REAL,
+        operating_income_raw REAL,
+        net_income_raw REAL,
+        operating_cash_flow_raw REAL,
+        capex_raw REAL,
+        fcf_raw REAL,
+        cash_raw REAL,
+        current_assets_raw REAL,
+        current_liabilities_raw REAL,
+        current_ratio REAL,
+        debt_raw REAL,
+        equity_raw REAL,
+        shares_raw REAL,
+        dilution_yoy REAL,
+        revenue_growth_yoy REAL,
+        gross_profit_growth_yoy REAL,
+        operating_income_growth_yoy REAL,
+        net_income_growth_yoy REAL,
+        fcf_growth_yoy REAL,
+        cash_growth_yoy REAL,
+        debt_growth_yoy REAL,
+        shares_growth_yoy REAL,
+        gross_margin REAL,
+        operating_margin REAL,
+        fcf_margin REAL,
+        source_status TEXT,
+        source_notes TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (ticker, fiscal_year)
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS price_history (
+        ticker TEXT NOT NULL,
+        trade_date TEXT NOT NULL,
+        open REAL,
+        high REAL,
+        low REAL,
+        close REAL,
+        adjusted_close REAL,
+        volume REAL,
+        source TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+        PRIMARY KEY (ticker, trade_date)
+    )
+    """)
+
+    cur.execute("""
+    CREATE TABLE IF NOT EXISTS price_metrics (
+        ticker TEXT PRIMARY KEY,
+        lookback_days INTEGER,
+        last_trade_date TEXT,
+        last_close REAL,
+        high_52w REAL,
+        low_52w REAL,
+        pct_from_52w_high REAL,
+        pct_above_52w_low REAL,
+        return_1m REAL,
+        return_3m REAL,
+        return_6m REAL,
+        return_1y REAL,
+        return_3y REAL,
+        volatility_30d REAL,
+        volatility_90d REAL,
+        momentum_flag TEXT,
+        drawdown_flag TEXT,
+        volatility_flag TEXT,
+        source_status TEXT,
+        updated_at TEXT DEFAULT CURRENT_TIMESTAMP
+    )
+    """)
+
+    cur.execute("""
     CREATE TABLE IF NOT EXISTS model_readiness (
         ticker TEXT PRIMARY KEY,
         company TEXT,
@@ -234,6 +315,46 @@ def init_db() -> None:
     })
 
     ensure_columns(conn, "model_readiness", {"peer_group": "TEXT"})
+    ensure_columns(conn, "historical_fundamentals", {
+        "period": "TEXT",
+        "filed": "TEXT",
+        "form": "TEXT",
+        "current_assets_raw": "REAL",
+        "current_liabilities_raw": "REAL",
+        "current_ratio": "REAL",
+        "equity_raw": "REAL",
+        "cash_growth_yoy": "REAL",
+        "debt_growth_yoy": "REAL",
+        "source_status": "TEXT",
+        "source_notes": "TEXT",
+        "updated_at": "TEXT DEFAULT CURRENT_TIMESTAMP",
+    })
+    ensure_columns(conn, "price_history", {
+        "adjusted_close": "REAL",
+        "source": "TEXT",
+        "updated_at": "TEXT DEFAULT CURRENT_TIMESTAMP",
+    })
+    ensure_columns(conn, "price_metrics", {
+        "lookback_days": "INTEGER",
+        "last_trade_date": "TEXT",
+        "last_close": "REAL",
+        "high_52w": "REAL",
+        "low_52w": "REAL",
+        "pct_from_52w_high": "REAL",
+        "pct_above_52w_low": "REAL",
+        "return_1m": "REAL",
+        "return_3m": "REAL",
+        "return_6m": "REAL",
+        "return_1y": "REAL",
+        "return_3y": "REAL",
+        "volatility_30d": "REAL",
+        "volatility_90d": "REAL",
+        "momentum_flag": "TEXT",
+        "drawdown_flag": "TEXT",
+        "volatility_flag": "TEXT",
+        "source_status": "TEXT",
+        "updated_at": "TEXT DEFAULT CURRENT_TIMESTAMP",
+    })
     seed_starter_tickers(conn)
 
     conn.commit()
@@ -304,6 +425,9 @@ def delete_ticker(ticker: str, delete_cached_data: bool = True) -> None:
     conn.execute("DELETE FROM market_data WHERE ticker = ?", (ticker,))
     conn.execute("DELETE FROM model_readiness WHERE ticker = ?", (ticker,))
     conn.execute("DELETE FROM assumptions WHERE ticker = ?", (ticker,))
+    conn.execute("DELETE FROM historical_fundamentals WHERE ticker = ?", (ticker,))
+    conn.execute("DELETE FROM price_history WHERE ticker = ?", (ticker,))
+    conn.execute("DELETE FROM price_metrics WHERE ticker = ?", (ticker,))
     if delete_cached_data:
         conn.execute("DELETE FROM api_cache WHERE ticker = ?", (ticker,))
 
@@ -390,5 +514,76 @@ def list_model_readiness(ticker: Optional[str] = None):
         rows = conn.execute("SELECT * FROM model_readiness WHERE ticker = ?", (ticker.upper().strip(),)).fetchall()
     else:
         rows = conn.execute("SELECT * FROM model_readiness ORDER BY ticker").fetchall()
+    conn.close()
+    return rows
+
+
+def insert_price_history_rows(rows: list[dict]) -> int:
+    if not rows:
+        return 0
+    conn = get_connection()
+    conn.executemany(
+        """
+        INSERT INTO price_history (
+            ticker, trade_date, open, high, low, close, adjusted_close, volume, source, updated_at
+        )
+        VALUES (
+            :ticker, :trade_date, :open, :high, :low, :close, :adjusted_close, :volume, :source, CURRENT_TIMESTAMP
+        )
+        ON CONFLICT(ticker, trade_date) DO UPDATE SET
+            open = excluded.open,
+            high = excluded.high,
+            low = excluded.low,
+            close = excluded.close,
+            adjusted_close = excluded.adjusted_close,
+            volume = excluded.volume,
+            source = excluded.source,
+            updated_at = CURRENT_TIMESTAMP
+        """,
+        rows,
+    )
+    conn.commit()
+    conn.close()
+    return len(rows)
+
+
+def list_historical_fundamentals(ticker: Optional[str] = None, limit: int = 500):
+    conn = get_connection()
+    if ticker:
+        rows = conn.execute(
+            "SELECT * FROM historical_fundamentals WHERE ticker = ? ORDER BY fiscal_year DESC LIMIT ?",
+            (ticker.upper().strip(), limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM historical_fundamentals ORDER BY ticker, fiscal_year DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    conn.close()
+    return rows
+
+
+def list_price_history(ticker: Optional[str] = None, limit: int = 750):
+    conn = get_connection()
+    if ticker:
+        rows = conn.execute(
+            "SELECT * FROM price_history WHERE ticker = ? ORDER BY trade_date DESC LIMIT ?",
+            (ticker.upper().strip(), limit),
+        ).fetchall()
+    else:
+        rows = conn.execute(
+            "SELECT * FROM price_history ORDER BY ticker, trade_date DESC LIMIT ?",
+            (limit,),
+        ).fetchall()
+    conn.close()
+    return rows
+
+
+def list_price_metrics(ticker: Optional[str] = None):
+    conn = get_connection()
+    if ticker:
+        rows = conn.execute("SELECT * FROM price_metrics WHERE ticker = ?", (ticker.upper().strip(),)).fetchall()
+    else:
+        rows = conn.execute("SELECT * FROM price_metrics ORDER BY ticker").fetchall()
     conn.close()
     return rows

@@ -24,6 +24,7 @@ SEC_FIELD_TO_COL = {
     "dilution_1y": "dilution_1y",
     "dilution_3y": "dilution_3y",
 }
+PRICE_METRIC_VALUE_COLUMNS = {"last_close", "high_52w", "low_52w"}
 
 
 def to_float(value) -> Optional[float]:
@@ -70,6 +71,13 @@ def latest_ok_text(conn, ticker: str, raw_field: str, source: str | None = None,
     sql = f"SELECT raw_value FROM api_cache WHERE {' AND '.join(clauses)} ORDER BY id DESC LIMIT 1"
     row = conn.execute(sql, params).fetchone()
     return str(row["raw_value"]) if row else None
+
+
+def latest_price_metric_value(conn, ticker: str, metric: str) -> Optional[float]:
+    if metric not in PRICE_METRIC_VALUE_COLUMNS:
+        raise ValueError(f"Unsupported price metric column: {metric}")
+    row = conn.execute(f"SELECT {metric} FROM price_metrics WHERE ticker = ?", (ticker,)).fetchone()
+    return to_float(row[metric]) if row else None
 
 
 def latest_ok_value_like(conn, ticker: str, raw_field_candidates: list[str], source: str | None = None, endpoint: str | None = None) -> Optional[float]:
@@ -159,6 +167,8 @@ def normalize_market_data_for_ticker(ticker: str) -> None:
         values["diluted_shares_raw"] = latest_ok_value(conn, ticker, "shares_latest_for_dilution", "SEC EDGAR")
 
     values["price_per_share"] = latest_ok_value_like(conn, ticker, ["c", "current", "price"], "FINNHUB", "quote")
+    if values["price_per_share"] is None:
+        values["price_per_share"] = latest_price_metric_value(conn, ticker, "last_close")
 
     market_cap_mm = latest_ok_value_like(conn, ticker, ["marketCapitalization", "metric.marketCapitalization"], "FINNHUB")
     values["market_cap_raw"] = market_cap_mm * 1_000_000 if market_cap_mm is not None else None
@@ -168,6 +178,10 @@ def normalize_market_data_for_ticker(ticker: str) -> None:
 
     values["high_52w"] = latest_ok_value_like(conn, ticker, ["metric.52WeekHigh", "52WeekHigh"], "FINNHUB")
     values["low_52w"] = latest_ok_value_like(conn, ticker, ["metric.52WeekLow", "52WeekLow"], "FINNHUB")
+    if values["high_52w"] is None:
+        values["high_52w"] = latest_price_metric_value(conn, ticker, "high_52w")
+    if values["low_52w"] is None:
+        values["low_52w"] = latest_price_metric_value(conn, ticker, "low_52w")
     values["beta"] = latest_ok_value_like(conn, ticker, ["metric.beta", "beta"], "FINNHUB")
     avg_vol_m = latest_ok_value_like(conn, ticker, ["metric.10DayAverageTradingVolume", "10DayAverageTradingVolume"], "FINNHUB")
     values["avg_volume_shares"] = avg_vol_m * 1_000_000 if avg_vol_m is not None else None
