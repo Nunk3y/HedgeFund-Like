@@ -7,8 +7,6 @@ from app.services.flag_service import (
     flag_quality,
     flag_valuation,
     flag_dilution,
-    flag_overall,
-    deep_dive_action,
 )
 
 
@@ -97,10 +95,6 @@ def safe_multiple(numerator, denominator):
     return numerator / denominator
 
 
-def clamp_score(value: float) -> int:
-    return max(0, min(100, int(round(value))))
-
-
 def score_data(readiness: str | None, source_status: str | None) -> int:
     readiness = readiness or ""
     source_status = source_status or ""
@@ -115,235 +109,61 @@ def score_data(readiness: str | None, source_status: str | None) -> int:
     return 20
 
 
-def score_quality(revenue, gross_profit, operating_income, fcf) -> int:
-    revenue = safe_float(revenue)
-    gross_profit = safe_float(gross_profit)
-    operating_income = safe_float(operating_income)
-    fcf = safe_float(fcf)
-
-    if revenue in (None, 0):
-        return 35
-
-    gross_margin = safe_multiple(gross_profit, revenue)
-    operating_margin = safe_multiple(operating_income, revenue)
-    fcf_margin = safe_multiple(fcf, revenue)
-
-    score = 40
-    if gross_margin is not None:
-        if gross_margin >= 0.65:
-            score += 20
-        elif gross_margin >= 0.45:
-            score += 12
-        elif gross_margin >= 0.25:
-            score += 5
-        else:
-            score -= 8
-
-    if operating_margin is not None:
-        if operating_margin >= 0.30:
-            score += 20
-        elif operating_margin >= 0.15:
-            score += 12
-        elif operating_margin >= 0:
-            score += 4
-        else:
-            score -= 12
-
-    if fcf_margin is not None:
-        if fcf_margin >= 0.25:
-            score += 20
-        elif fcf_margin >= 0.10:
-            score += 12
-        elif fcf_margin >= 0:
-            score += 4
-        else:
-            score -= 15
-
-    return clamp_score(score)
+def flag_level(flag: str) -> str:
+    flag = str(flag or "").upper()
+    if flag.startswith("RED"):
+        return "red"
+    if flag.startswith("YELLOW") or flag.startswith("PURPLE"):
+        return "watch"
+    if flag.startswith("GRAY"):
+        return "data"
+    if flag.startswith("GREEN"):
+        return "clear"
+    return "neutral"
 
 
-def score_valuation(ev_rev, ev_fcf, ps, pe_ratio, fcf) -> int:
-    fcf = safe_float(fcf)
-    ev_rev = safe_float(ev_rev)
-    ev_fcf = safe_float(ev_fcf)
-    ps = safe_float(ps)
-    pe_ratio = safe_float(pe_ratio)
+def summarize_red_flags(
+    data_flag: str,
+    quality_flag: str,
+    valuation_flag: str,
+    balance_flag: str,
+    dilution_flag: str,
+    peer_group: str,
+) -> tuple[str, str, str, str]:
+    red_flags: list[str] = []
+    watch_items: list[str] = []
 
-    score = 50
-    if fcf is not None and fcf <= 0:
-        score -= 25
+    if flag_level(data_flag) == "data":
+        red_flags.append(data_flag)
+    if not peer_group:
+        red_flags.append("GRAY — No Peer Group")
 
-    if ev_fcf is not None and ev_fcf > 0:
-        if ev_fcf <= 15:
-            score += 25
-        elif ev_fcf <= 25:
-            score += 15
-        elif ev_fcf <= 40:
-            score += 5
-        else:
-            score -= 10
-    elif ev_rev is not None:
-        if ev_rev <= 5:
-            score += 18
-        elif ev_rev <= 10:
-            score += 8
-        elif ev_rev <= 20:
-            score -= 3
-        else:
-            score -= 15
-    elif ps is not None:
-        if ps <= 5:
-            score += 12
-        elif ps <= 10:
-            score += 4
-        elif ps > 20:
-            score -= 12
+    for flag in [quality_flag, valuation_flag, balance_flag, dilution_flag]:
+        level = flag_level(flag)
+        if level == "red":
+            red_flags.append(flag)
+        elif level == "watch":
+            watch_items.append(flag)
 
-    if pe_ratio is not None and pe_ratio > 0:
-        if pe_ratio <= 20:
-            score += 8
-        elif pe_ratio > 60:
-            score -= 8
+    if any(str(flag).startswith("GRAY") for flag in red_flags):
+        result = "GRAY — Fix Data First"
+        action = "Fix data or peer group before comparing this ticker."
+    elif red_flags:
+        result = "RED — Red Flag"
+        action = "Stop unless there is a specific reason this red flag is acceptable."
+    elif watch_items:
+        result = "YELLOW — Needs Context"
+        action = "Review watch items, then continue to Peer Gate if they are acceptable."
+    else:
+        result = "GREEN — Ready For Peer Gate"
+        action = "Move to Peer Gate and compare against alternatives."
 
-    return clamp_score(score)
-
-
-def score_balance_sheet(cash, debt, current_ratio, fcf) -> int:
-    cash = safe_float(cash)
-    debt = safe_float(debt)
-    current_ratio = safe_float(current_ratio)
-    fcf = safe_float(fcf)
-
-    score = 50
-    if cash is not None and debt is not None:
-        if cash > debt:
-            score += 25
-        elif debt > cash * 2:
-            score -= 20
-        else:
-            score += 5
-
-    if current_ratio is not None:
-        if current_ratio >= 2:
-            score += 15
-        elif current_ratio >= 1:
-            score += 5
-        else:
-            score -= 15
-
-    if fcf is not None:
-        if fcf > 0:
-            score += 10
-        else:
-            score -= 10
-
-    return clamp_score(score)
-
-
-def score_dilution(dilution_1y, dilution_3y, sbc, revenue) -> int:
-    dilution_1y = safe_float(dilution_1y)
-    dilution_3y = safe_float(dilution_3y)
-    sbc = safe_float(sbc)
-    revenue = safe_float(revenue)
-
-    score = 75
-    if dilution_1y is not None:
-        if dilution_1y <= 0:
-            score += 15
-        elif dilution_1y <= 0.02:
-            score += 5
-        elif dilution_1y <= 0.05:
-            score -= 10
-        else:
-            score -= 25
-
-    if dilution_3y is not None:
-        if dilution_3y <= 0.05:
-            score += 10
-        elif dilution_3y <= 0.15:
-            score -= 5
-        else:
-            score -= 20
-
-    sbc_ratio = safe_multiple(sbc, revenue)
-    if sbc_ratio is not None:
-        if sbc_ratio <= 0.05:
-            score += 5
-        elif sbc_ratio <= 0.15:
-            score -= 5
-        else:
-            score -= 20
-
-    return clamp_score(score)
-
-
-def score_fcf(fcf, revenue) -> int:
-    fcf = safe_float(fcf)
-    revenue = safe_float(revenue)
-    if fcf is None:
-        return 20
-    if revenue in (None, 0):
-        return 50 if fcf > 0 else 25
-    margin = fcf / revenue
-    if margin >= 0.30:
-        return 100
-    if margin >= 0.20:
-        return 90
-    if margin >= 0.10:
-        return 75
-    if margin >= 0:
-        return 60
-    if margin >= -0.10:
-        return 35
-    return 15
-
-
-def final_score(data_score, quality_score, valuation_score, balance_score, dilution_score, fcf_score) -> int:
-    score = (
-        data_score * 0.15
-        + quality_score * 0.25
-        + valuation_score * 0.20
-        + balance_score * 0.15
-        + dilution_score * 0.10
-        + fcf_score * 0.15
+    return (
+        result,
+        "; ".join(red_flags) if red_flags else "None flagged",
+        "; ".join(watch_items) if watch_items else "None flagged",
+        action,
     )
-    return clamp_score(score)
-
-
-def risk_adjusted_score(score: int, overall_flag: str) -> int:
-    if overall_flag.startswith("GREEN"):
-        return score
-    if overall_flag.startswith("YELLOW"):
-        return min(score, 74)
-    if overall_flag.startswith("PURPLE"):
-        return min(score, 64)
-    if overall_flag.startswith("RED"):
-        return min(score, 49)
-    if overall_flag.startswith("GRAY"):
-        return min(score, 39)
-    return score
-
-
-def rank_label(score: int, overall_flag: str) -> str:
-    if overall_flag.startswith("GRAY"):
-        return "NEEDS DATA"
-    if overall_flag.startswith("RED"):
-        return "D — Skip / Too Weak"
-    if overall_flag.startswith("PURPLE"):
-        return "SPECULATIVE — Catalyst Only"
-    if overall_flag.startswith("YELLOW"):
-        if score >= 65:
-            return "B — Watch Closely"
-        if score >= 50:
-            return "C — Monitor"
-        return "D — Low Priority"
-    if score >= 80:
-        return "A — Deep Dive"
-    if score >= 65:
-        return "B — Watch Closely"
-    if score >= 50:
-        return "C — Monitor"
-    return "D — Low Priority"
 
 
 def list_master_watchlist():
@@ -390,38 +210,33 @@ def list_master_watchlist():
         balance_flag = flag_balance_sheet(r["cash_raw"], r["debt_raw"], r["current_ratio"], fcf)
         valuation_flag = flag_valuation(r["market_cap_raw"], r["enterprise_value_raw"], r["revenue_raw"], fcf, r["pe_ratio"], r["readiness"])
         dilution_flag = flag_dilution(r["dilution_1y"], r["dilution_3y"], r["sbc_raw"], r["revenue_raw"])
-        overall_flag = flag_overall(r["readiness"], data_flag, valuation_flag, quality_flag, balance_flag, dilution_flag, r["missing_weak_areas"])
-
         data_score = score_data(r["readiness"], r["source_status"])
-        quality_score = score_quality(r["revenue_raw"], r["gross_profit_raw"], r["operating_income_raw"], fcf)
-        valuation_score = score_valuation(ev_rev, ev_fcf, ps, r["pe_ratio"], fcf)
-        balance_score = score_balance_sheet(r["cash_raw"], r["debt_raw"], r["current_ratio"], fcf)
-        dilution_score = score_dilution(r["dilution_1y"], r["dilution_3y"], r["sbc_raw"], r["revenue_raw"])
-        fcf_score = score_fcf(fcf, r["revenue_raw"])
-        raw_score = final_score(data_score, quality_score, valuation_score, balance_score, dilution_score, fcf_score)
-        total_score = risk_adjusted_score(raw_score, overall_flag)
+        peer_group = r["peer_group"] or r["category"] or ""
+        red_flag_result, red_flags, watch_items, action = summarize_red_flags(
+            data_flag,
+            quality_flag,
+            valuation_flag,
+            balance_flag,
+            dilution_flag,
+            peer_group,
+        )
 
         out.append({
             "Ticker": r["ticker"],
-            "Final Rank": rank_label(total_score, overall_flag),
-            "Score": str(total_score),
-            "Raw Score": str(raw_score),
-            "Quality Score": str(quality_score),
-            "Valuation Score": str(valuation_score),
-            "Balance Score": str(balance_score),
-            "Dilution Score": str(dilution_score),
-            "FCF Score": str(fcf_score),
+            "Review Status": red_flag_result,
             "Data Score": str(data_score),
-            "Overall Flag": overall_flag,
-            "Deep Dive Action": deep_dive_action(overall_flag),
-            "Valuation Flag": valuation_flag,
-            "Quality Flag": quality_flag,
-            "Balance Sheet Flag": balance_flag,
-            "Dilution Flag": dilution_flag,
             "Data Confidence Flag": data_flag,
+            "Red Flag Result": red_flag_result,
+            "Red Flags": red_flags,
+            "Watch Items": watch_items,
+            "Action": action,
+            "Standalone Valuation Flag": valuation_flag,
+            "Standalone Business Flag": quality_flag,
+            "Standalone Balance Flag": balance_flag,
+            "Standalone Dilution Flag": dilution_flag,
             "Company": r["company"] or "",
             "Category": r["category"] or "",
-            "Peer Group": r["peer_group"] or r["category"] or "",
+            "Peer Group": peer_group,
             "Price": fmt_price(r["price_per_share"]),
             "Market Cap": fmt_billions(r["market_cap_raw"]),
             "EV": fmt_billions(r["enterprise_value_raw"]),
@@ -459,4 +274,19 @@ def list_master_watchlist():
             "Source Status": r["source_status"] or "",
         })
 
-    return sorted(out, key=lambda row: int(row.get("Score") or 0), reverse=True)
+    def sort_key(row: dict) -> tuple[int, int, str]:
+        status = str(row.get("Review Status", ""))
+        status_rank = 0
+        if status.startswith("GREEN"):
+            status_rank = 3
+        elif status.startswith("YELLOW"):
+            status_rank = 2
+        elif status.startswith("RED"):
+            status_rank = 1
+        try:
+            data_score = int(row.get("Data Score") or 0)
+        except Exception:
+            data_score = 0
+        return (-status_rank, -data_score, str(row.get("Ticker", "")))
+
+    return sorted(out, key=sort_key)

@@ -5,8 +5,9 @@ SETTINGS_DB_PATH = Path("personal_settings.db")
 
 
 def get_settings_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(SETTINGS_DB_PATH)
+    conn = sqlite3.connect(SETTINGS_DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 

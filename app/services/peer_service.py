@@ -85,6 +85,13 @@ def flag_relative_lower_is_better(value, peer_median, metric_name: str) -> str:
         return "GRAY — No Peer Benchmark"
 
     ratio = value / peer_median
+    if metric_name == "Dilution":
+        if ratio <= 0.75:
+            return "GREEN — Low Dilution vs Peers"
+        if ratio <= 1.25:
+            return "YELLOW — Near Peer Median"
+        return "RED — High Dilution vs Peers"
+
     if ratio <= 0.75:
         return "GREEN — Cheap vs Peers"
     if ratio <= 1.25:
@@ -106,7 +113,14 @@ def flag_relative_higher_is_better(value, peer_median, metric_name: str) -> str:
     return "RED — Weak vs Peers"
 
 
-def overall_peer_flag(valuation_flag: str, quality_flag: str, balance_flag: str, peer_count: int, readiness: str | None) -> str:
+def overall_peer_flag(
+    valuation_flag: str,
+    quality_flag: str,
+    balance_flag: str,
+    dilution_flag: str,
+    peer_count: int,
+    readiness: str | None,
+) -> str:
     readiness = readiness or ""
 
     if peer_count < 2:
@@ -115,7 +129,7 @@ def overall_peer_flag(valuation_flag: str, quality_flag: str, balance_flag: str,
     if "PRE-REVENUE" in readiness:
         return "PURPLE — Speculative Peer Set"
 
-    flags = [valuation_flag, quality_flag, balance_flag]
+    flags = [valuation_flag, quality_flag, balance_flag, dilution_flag]
     red = sum(1 for f in flags if f.startswith("RED"))
     green = sum(1 for f in flags if f.startswith("GREEN"))
 
@@ -152,6 +166,8 @@ def list_peer_comparison():
         current_ratio = safe_float(r["current_ratio"])
         operating_income = safe_float(r["operating_income_raw"])
         gross_profit = safe_float(r["gross_profit_raw"])
+        dilution_1y = safe_float(r["dilution_1y"])
+        dilution_3y = safe_float(r["dilution_3y"])
 
         ev_rev = safe_div(ev, revenue)
         ev_fcf = safe_div(ev, fcf) if fcf and fcf > 0 else None
@@ -174,6 +190,8 @@ def list_peer_comparison():
             "op_margin": op_margin,
             "gross_margin": gross_margin,
             "current_ratio": current_ratio,
+            "dilution_1y": dilution_1y,
+            "dilution_3y": dilution_3y,
             "net_cash": net_cash,
         })
 
@@ -192,6 +210,8 @@ def list_peer_comparison():
             "op_margin_median": median_or_none([i["op_margin"] for i in items]),
             "gross_margin_median": median_or_none([i["gross_margin"] for i in items]),
             "current_ratio_median": median_or_none([i["current_ratio"] for i in items]),
+            "dilution_1y_median": median_or_none([i["dilution_1y"] for i in items]),
+            "dilution_3y_median": median_or_none([i["dilution_3y"] for i in items]),
         }
 
     out = []
@@ -215,7 +235,13 @@ def list_peer_comparison():
         quality_flag = flag_relative_higher_is_better(quality_value, quality_median, "Margin")
 
         balance_flag = flag_relative_higher_is_better(item["current_ratio"], stats["current_ratio_median"], "Current Ratio")
-        peer_flag = overall_peer_flag(valuation_flag, quality_flag, balance_flag, peer_count, r["readiness"])
+        dilution_value = item["dilution_3y"]
+        dilution_median = stats["dilution_3y_median"]
+        if dilution_value is None or dilution_median is None:
+            dilution_value = item["dilution_1y"]
+            dilution_median = stats["dilution_1y_median"]
+        dilution_flag = flag_relative_lower_is_better(dilution_value, dilution_median, "Dilution")
+        peer_flag = overall_peer_flag(valuation_flag, quality_flag, balance_flag, dilution_flag, peer_count, r["readiness"])
 
         out.append({
             "Ticker": r["ticker"],
@@ -225,6 +251,7 @@ def list_peer_comparison():
             "Relative Valuation Flag": valuation_flag,
             "Relative Quality Flag": quality_flag,
             "Relative Balance Flag": balance_flag,
+            "Relative Dilution Flag": dilution_flag,
             "EV/Revenue": fmt_ratio(item["ev_rev"]),
             "Peer Median EV/Revenue": fmt_ratio(stats["ev_rev_median"]),
             "EV/FCF": fmt_ev_fcf(item["ev_fcf"], item["fcf_raw"]),
@@ -239,6 +266,10 @@ def list_peer_comparison():
             "Peer Median Gross Margin": fmt_percent(stats["gross_margin_median"]),
             "Current Ratio": fmt_number(item["current_ratio"]),
             "Peer Median Current Ratio": fmt_number(stats["current_ratio_median"]),
+            "Dilution 1Y": fmt_percent(item["dilution_1y"]),
+            "Peer Median Dilution 1Y": fmt_percent(stats["dilution_1y_median"]),
+            "Dilution 3Y": fmt_percent(item["dilution_3y"]),
+            "Peer Median Dilution 3Y": fmt_percent(stats["dilution_3y_median"]),
             "Readiness": r["readiness"] or "",
             "Missing / Weak Areas": r["missing_weak_areas"] or "",
         })

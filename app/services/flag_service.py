@@ -107,39 +107,30 @@ def flag_valuation(market_cap, enterprise_value, revenue, fcf, pe_ratio, readine
         return "GRAY — Missing Valuation Data"
 
     risk_points = 0
-    good_points = 0
 
     if ev_rev is not None:
         if ev_rev > 25:
             risk_points += 2
         elif ev_rev > 12:
             risk_points += 1
-        elif ev_rev < 6:
-            good_points += 1
 
     if pe is not None:
         if pe > 60:
             risk_points += 2
         elif pe > 35:
             risk_points += 1
-        elif 0 < pe < 25:
-            good_points += 1
 
     if ev_fcf is not None and ev_fcf > 0:
         if ev_fcf > 60:
             risk_points += 2
         elif ev_fcf > 35:
             risk_points += 1
-        elif ev_fcf < 25:
-            good_points += 1
 
     if risk_points >= 3:
-        return "RED — Expensive"
+        return "RED — Extreme Valuation Risk"
     if risk_points >= 1:
         return "YELLOW — Valuation Risk"
-    if good_points >= 2:
-        return "GREEN — Reasonable Valuation"
-    return "YELLOW — Review Valuation"
+    return "GREEN — No Extreme Valuation Risk"
 
 
 def flag_dilution(dilution_1y, dilution_3y, sbc, revenue) -> str:
@@ -167,43 +158,3 @@ def flag_dilution(dilution_1y, dilution_3y, sbc, revenue) -> str:
         return "YELLOW — Dilution Watch"
 
     return "GREEN — Dilution OK"
-
-
-def flag_overall(readiness, data_flag, valuation_flag, quality_flag, balance_flag, dilution_flag, missing_weak) -> str:
-    readiness = readiness or ""
-    missing_weak = missing_weak or ""
-
-    flags = [data_flag, valuation_flag, quality_flag, balance_flag, dilution_flag]
-    if any(f.startswith("GRAY") for f in flags) and not is_partial_or_pre_revenue(readiness):
-        return "GRAY — Insufficient Data"
-
-    if "pre-revenue" in missing_weak.lower() or is_partial_or_pre_revenue(readiness):
-        if balance_flag.startswith("GREEN") or balance_flag.startswith("YELLOW"):
-            return "PURPLE — Speculative Catalyst Only"
-        return "RED — Speculative / Weak Balance Sheet"
-
-    red_count = sum(1 for f in flags if f.startswith("RED"))
-    yellow_count = sum(1 for f in flags if f.startswith("YELLOW"))
-    green_count = sum(1 for f in flags if f.startswith("GREEN"))
-
-    if red_count >= 2:
-        return "RED — Skip / Too Weak"
-    if red_count == 1:
-        return "YELLOW — Watch / Needs Context"
-    if green_count >= 3 and yellow_count <= 2:
-        return "GREEN — Deep Dive Candidate"
-    return "YELLOW — Watch / Needs Catalyst"
-
-
-def deep_dive_action(overall_flag: str) -> str:
-    if overall_flag.startswith("GREEN"):
-        return "Deep dive"
-    if overall_flag.startswith("PURPLE"):
-        return "Speculative catalyst research only"
-    if overall_flag.startswith("YELLOW"):
-        return "Watch; look for catalyst or peer discount"
-    if overall_flag.startswith("GRAY"):
-        return "Fix data before research"
-    if overall_flag.startswith("RED"):
-        return "Skip unless catalyst is exceptional"
-    return "Review"

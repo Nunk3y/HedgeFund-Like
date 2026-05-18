@@ -10,8 +10,10 @@ STARTER_TICKER_SET = {ticker for ticker, _, _ in STARTER_TICKERS}
 
 
 def get_connection() -> sqlite3.Connection:
-    conn = sqlite3.connect(DB_PATH)
+    conn = sqlite3.connect(DB_PATH, timeout=10)
     conn.row_factory = sqlite3.Row
+    conn.execute("PRAGMA foreign_keys = ON")
+    conn.execute("PRAGMA busy_timeout = 5000")
     return conn
 
 
@@ -74,6 +76,8 @@ def seed_starter_tickers(conn: sqlite3.Connection) -> None:
 def init_db() -> None:
     conn = get_connection()
     cur = conn.cursor()
+    cur.execute("PRAGMA journal_mode = WAL")
+    cur.execute("PRAGMA synchronous = NORMAL")
 
     cur.execute("""
     CREATE TABLE IF NOT EXISTS tickers (
@@ -344,6 +348,19 @@ def init_db() -> None:
         "source_status": "TEXT",
         "updated_at": "TEXT DEFAULT CURRENT_TIMESTAMP",
     })
+
+    cur.executescript("""
+    CREATE INDEX IF NOT EXISTS idx_tickers_status ON tickers(status);
+    CREATE INDEX IF NOT EXISTS idx_api_cache_ticker_source ON api_cache(ticker, source);
+    CREATE INDEX IF NOT EXISTS idx_api_cache_ticker_source_created ON api_cache(ticker, source, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_api_cache_ticker_id ON api_cache(ticker, id DESC);
+    CREATE INDEX IF NOT EXISTS idx_market_data_peer_group ON market_data(peer_group);
+    CREATE INDEX IF NOT EXISTS idx_market_data_category ON market_data(category);
+    CREATE INDEX IF NOT EXISTS idx_historical_fundamentals_ticker_year ON historical_fundamentals(ticker, fiscal_year DESC);
+    CREATE INDEX IF NOT EXISTS idx_historical_fundamentals_ticker_updated ON historical_fundamentals(ticker, updated_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_price_history_ticker_date ON price_history(ticker, trade_date DESC);
+    CREATE INDEX IF NOT EXISTS idx_price_history_ticker_updated ON price_history(ticker, updated_at DESC);
+    """)
     seed_starter_tickers(conn)
 
     conn.commit()

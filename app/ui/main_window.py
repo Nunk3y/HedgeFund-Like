@@ -51,7 +51,6 @@ from app.services.price_data_service import refresh_price_history_rows
 from app.services.price_history_service import recalculate_price_metrics_for_ticker
 from app.services.readiness_service import calculate_model_readiness_for_ticker
 from app.services.repair_service import repair_all_missing_data
-from app.services.scoring_service import list_score_details
 from app.services.sec_service import refresh_sec_rows
 from app.services.watchlist_service import list_master_watchlist
 
@@ -273,16 +272,13 @@ QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: t
 """
 
 FLAG_COLUMNS = {
-    "Overall Flag", "Deep Dive Action", "Valuation Flag", "Quality Flag", "Balance Sheet Flag",
-    "Dilution Flag", "Data Confidence Flag", "Overall Peer Flag", "Relative Valuation Flag",
-    "Relative Quality Flag", "Relative Balance Flag", "Readiness", "Momentum Flag",
-    "Drawdown Flag", "Volatility Flag",
+    "Review Status", "Red Flag Result", "Action", "Data Confidence Flag",
+    "Standalone Valuation Flag", "Standalone Business Flag", "Standalone Balance Flag",
+    "Standalone Dilution Flag", "Overall Peer Flag", "Relative Valuation Flag",
+    "Relative Quality Flag", "Relative Balance Flag", "Relative Dilution Flag",
+    "Readiness", "Momentum Flag", "Drawdown Flag", "Volatility Flag",
 }
-SCORE_COLUMNS = {
-    "Score", "Quality Score", "Valuation Score", "Balance Score", "Dilution Score",
-    "FCF Score", "Data Score", "Component Score", "Overall Score", "Raw Score",
-    "Data Quality Score",
-}
+SCORE_COLUMNS = {"Data Score", "Data Quality Score"}
 DEFAULT_SEC_USER_AGENT = ""
 DEFAULT_PEER_GROUPS = [
     "", "AI Hardware / Semiconductors", "Semiconductor Manufacturing", "Semiconductor Equipment",
@@ -293,8 +289,7 @@ DEFAULT_PEER_GROUPS = [
 ]
 TAB_HINTS = {
     "Overview": "Executive signal board, decision buckets, and research alerts.",
-    "Master Watchlist": "Risk-adjusted ranking, flags, scores, valuation, and market behavior.",
-    "Score Details": "Component score audit trail with raw score versus risk-adjusted score.",
+    "Master Watchlist": "Screener entry view with data readiness, red flags, peer group, and market behavior.",
     "Data Quality": "Completeness, freshness, currency warnings, and repair actions.",
     "Peer Comparison": "Relative valuation, quality, and balance-sheet context by peer group.",
     "API Cache": "Raw SEC and Finnhub rows used by the normalized model.",
@@ -303,7 +298,7 @@ TAB_HINTS = {
     "Price Trends": "Returns, drawdown, momentum, and volatility metrics from candles.",
     "Price History": "Stored daily open, high, low, close, adjusted close, and volume.",
     "Model Readiness": "Missing/weak field checks and next action guidance.",
-    "Research Guide": "Saved hedge-fund-style analysis workflow and memo checklist.",
+    "Research Guide": "Saved five-step screener workflow and risk/reward blueprint.",
 }
 DEFAULT_TAB_ORDER = list(TAB_HINTS.keys())
 TAB_ORDER_SETTING = "workspace_tab_order"
@@ -486,7 +481,6 @@ class MainWindow(QMainWindow):
         for label, tab_target in [
             ("Overview", "Overview"),
             ("Watchlist", "Master Watchlist"),
-            ("Scores", "Score Details"),
             ("Quality", "Data Quality"),
             ("Peers", "Peer Comparison"),
             ("Data", "API Cache"),
@@ -662,7 +656,7 @@ class MainWindow(QMainWindow):
             "2. Assign the correct peer group.\n"
             "3. Enter API settings once. They are stored only in your local tech_screener.db file.\n"
             "4. Run the full pipeline.\n\n"
-            "The Overview tab ranks names by score and highlights candidates for deeper research."
+            "The Overview tab sorts names into data, red-flag, and peer-review workflow buckets."
         )
         right_layout.addWidget(self.details)
         return right
@@ -726,14 +720,14 @@ class MainWindow(QMainWindow):
         title.setObjectName("HeroTitle")
         title.setAlignment(Qt.AlignCenter)
         title.setWordWrap(True)
-        subtitle = QLabel("Run SEC + Finnhub data through a local scoring model to rank quality, valuation, balance sheet strength, dilution risk, and data confidence.")
+        subtitle = QLabel("Run SEC + Finnhub data through a local workflow for data checks, red flags, peer comparison, risk/reward, and decision handoff.")
         subtitle.setObjectName("HeroSubtitle")
         subtitle.setAlignment(Qt.AlignCenter)
         subtitle.setWordWrap(True)
         signal_row = QHBoxLayout()
         signal_row.setSpacing(10)
         signal_row.addStretch()
-        for text in ["LOCAL SQLITE CACHE", "SEC + FINNHUB PIPELINE", "QUALITY / VALUE / RISK FLAGS"]:
+        for text in ["LOCAL SQLITE CACHE", "SEC + FINNHUB PIPELINE", "DATA / RED FLAG / PEER FLOW"]:
             signal = QLabel(text)
             signal.setObjectName("SignalPill")
             signal_row.addWidget(signal)
@@ -747,9 +741,9 @@ class MainWindow(QMainWindow):
         metric_grid.setSpacing(14)
         card, self.metric_total, self.metric_total_sub = make_metric_card("Universe", "0", "tracked tickers")
         metric_grid.addWidget(card, 0, 0)
-        card, self.metric_deep_dive, self.metric_deep_dive_sub = make_metric_card("Deep Dive", "0", "green candidates")
+        card, self.metric_deep_dive, self.metric_deep_dive_sub = make_metric_card("Peer Ready", "0", "green rows")
         metric_grid.addWidget(card, 0, 1)
-        card, self.metric_watch, self.metric_watch_sub = make_metric_card("Watch", "0", "yellow names")
+        card, self.metric_watch, self.metric_watch_sub = make_metric_card("Watch", "0", "needs context")
         metric_grid.addWidget(card, 0, 2)
         card, self.metric_data, self.metric_data_sub = make_metric_card("Needs Data", "0", "gray names")
         metric_grid.addWidget(card, 0, 3)
@@ -775,21 +769,13 @@ class MainWindow(QMainWindow):
         tabs.addTab(overview, "Overview")
 
     def build_data_tabs(self, tabs: QTabWidget) -> None:
-        self.master_columns = ["Ticker", "Final Rank", "Score", "Raw Score", "Quality Score", "Valuation Score", "Balance Score", "Dilution Score", "FCF Score", "Data Score", "Overall Flag", "Deep Dive Action", "Valuation Flag", "Quality Flag", "Balance Sheet Flag", "Dilution Flag", "Data Confidence Flag", "Company", "Peer Group", "Price", "Market Cap", "EV", "Revenue", "FCF", "Cash", "Debt", "Current Ratio", "Shares Out", "Diluted Shares", "Dilution 1Y", "Dilution 3Y", "EV/Revenue", "EV/FCF", "P/S", "P/E", "Beta", "52W High", "52W Low", "Momentum Flag", "Drawdown Flag", "Volatility Flag", "1M Return", "3M Return", "6M Return", "1Y Return", "3Y Return", "From 52W High", "90D Volatility", "Price Data Through", "Cash Runway", "Readiness", "Next Action", "Missing / Weak Areas", "Source Status"]
+        self.master_columns = ["Ticker", "Review Status", "Data Score", "Data Confidence Flag", "Red Flag Result", "Red Flags", "Watch Items", "Action", "Standalone Valuation Flag", "Standalone Business Flag", "Standalone Balance Flag", "Standalone Dilution Flag", "Company", "Peer Group", "Price", "Market Cap", "EV", "Revenue", "FCF", "Cash", "Debt", "Current Ratio", "Shares Out", "Diluted Shares", "Dilution 1Y", "Dilution 3Y", "EV/Revenue", "EV/FCF", "P/S", "P/E", "Beta", "52W High", "52W Low", "Momentum Flag", "Drawdown Flag", "Volatility Flag", "1M Return", "3M Return", "6M Return", "1Y Return", "3Y Return", "From 52W High", "90D Volatility", "Price Data Through", "Cash Runway", "Readiness", "Missing / Weak Areas", "Source Status"]
         self.master_table = QTableWidget()
         self.master_table.setColumnCount(len(self.master_columns))
         self.master_table.setHorizontalHeaderLabels(self.master_columns)
         polish_table(self.master_table, sticky_ticker=True)
         self.master_table.cellClicked.connect(lambda row, col: self.table_selection_changed(self.master_table, row))
         tabs.addTab(self.master_table, "Master Watchlist")
-
-        self.score_detail_columns = ["Ticker", "Company", "Component", "Component Score", "Weight", "Weighted Points", "Flag", "Inputs / Rationale", "Overall Score", "Raw Score", "Final Rank", "Overall Flag", "Deep Dive Action", "Readiness", "Missing / Weak Areas"]
-        self.score_detail_table = QTableWidget()
-        self.score_detail_table.setColumnCount(len(self.score_detail_columns))
-        self.score_detail_table.setHorizontalHeaderLabels(self.score_detail_columns)
-        polish_table(self.score_detail_table, sticky_ticker=True)
-        self.score_detail_table.cellClicked.connect(lambda row, col: self.table_selection_changed(self.score_detail_table, row))
-        tabs.addTab(self.score_detail_table, "Score Details")
 
         data_quality_panel = QWidget()
         data_quality_panel.setObjectName("DataPanel")
@@ -827,7 +813,7 @@ class MainWindow(QMainWindow):
         data_quality_layout.addWidget(self.data_quality_table, 3)
         tabs.addTab(data_quality_panel, "Data Quality")
 
-        self.peer_columns = ["Ticker", "Peer Group", "Peer Count", "Overall Peer Flag", "Relative Valuation Flag", "Relative Quality Flag", "Relative Balance Flag", "EV/Revenue", "Peer Median EV/Revenue", "EV/FCF", "Peer Median EV/FCF", "P/S", "Peer Median P/S", "FCF Margin", "Peer Median FCF Margin", "Operating Margin", "Peer Median Operating Margin", "Gross Margin", "Peer Median Gross Margin", "Current Ratio", "Peer Median Current Ratio", "Readiness", "Missing / Weak Areas"]
+        self.peer_columns = ["Ticker", "Peer Group", "Peer Count", "Overall Peer Flag", "Relative Valuation Flag", "Relative Quality Flag", "Relative Balance Flag", "Relative Dilution Flag", "EV/Revenue", "Peer Median EV/Revenue", "EV/FCF", "Peer Median EV/FCF", "P/S", "Peer Median P/S", "FCF Margin", "Peer Median FCF Margin", "Operating Margin", "Peer Median Operating Margin", "Gross Margin", "Peer Median Gross Margin", "Current Ratio", "Peer Median Current Ratio", "Dilution 1Y", "Peer Median Dilution 1Y", "Dilution 3Y", "Peer Median Dilution 3Y", "Readiness", "Missing / Weak Areas"]
         self.peer_table = QTableWidget()
         self.peer_table.setColumnCount(len(self.peer_columns))
         self.peer_table.setHorizontalHeaderLabels(self.peer_columns)
@@ -900,18 +886,18 @@ class MainWindow(QMainWindow):
         layout = QVBoxLayout(guide)
         layout.setContentsMargins(18, 18, 18, 18)
         layout.setSpacing(12)
-        title = QLabel("Research Guide")
+        title = QLabel("Workflow Guide")
         title.setObjectName("PanelTitle")
-        hint = QLabel("A saved hedge-fund-style checklist for analyzing stocks from the screener.")
+        hint = QLabel("Saved five-step workflow for using the screener before leaving the app for company research.")
         hint.setObjectName("PanelHint")
         self.research_guide = QTextEdit()
         self.research_guide.setReadOnly(True)
-        guide_path = Path(__file__).resolve().parents[2] / "docs" / "hedge_fund_stock_analysis_guide.md"
+        guide_path = Path(__file__).resolve().parents[2] / "docs" / "product_workflow_spec.txt"
         try:
             text = guide_path.read_text(encoding="utf-8")
         except Exception as exc:
-            text = f"Research guide could not be loaded.\n\nExpected file:\n{guide_path}\n\nError:\n{exc}"
-        self.research_guide.setMarkdown(text)
+            text = f"Workflow guide could not be loaded.\n\nExpected file:\n{guide_path}\n\nError:\n{exc}"
+        self.research_guide.setPlainText(text)
         layout.addWidget(title)
         layout.addWidget(hint)
         layout.addWidget(self.research_guide, 1)
@@ -992,7 +978,11 @@ class MainWindow(QMainWindow):
         self.update_decision_brief(ticker)
 
     def update_decision_brief(self, ticker: str) -> None:
-        master = next((row for row in list_master_watchlist() if row.get("Ticker") == ticker), None)
+        master_rows = getattr(self, "_master_rows", None)
+        if master_rows is None:
+            master_rows = list_master_watchlist()
+            self._master_rows = master_rows
+        master = next((row for row in master_rows if row.get("Ticker") == ticker), None)
         quality_summary = next((row for row in list_data_quality_summary(ticker) if row.get("Ticker") == ticker), None)
         if not master:
             self.details.setText(f"{ticker}\n\nSelected. Run the pipeline to generate screening details.")
@@ -1001,17 +991,17 @@ class MainWindow(QMainWindow):
         lines = [
             ticker,
             "",
-            f"Rank: {master.get('Final Rank', '')}",
-            f"Score: {master.get('Score', '')}  |  Raw Score: {master.get('Raw Score', '')}",
-            f"Overall: {master.get('Overall Flag', '')}",
-            f"Action: {master.get('Deep Dive Action', '')}",
+            f"Review status: {master.get('Review Status', '')}",
+            f"Data score: {master.get('Data Score', '')}  |  Data: {master.get('Data Confidence Flag', '')}",
+            f"Red flags: {master.get('Red Flags', '')}",
+            f"Watch items: {master.get('Watch Items', '')}",
+            f"Action: {master.get('Action', '')}",
             "",
-            "Core Flags",
-            f"Valuation: {master.get('Valuation Flag', '')}",
-            f"Quality: {master.get('Quality Flag', '')}",
-            f"Balance: {master.get('Balance Sheet Flag', '')}",
-            f"Dilution: {master.get('Dilution Flag', '')}",
-            f"Data: {master.get('Data Confidence Flag', '')}",
+            "Standalone Red-Flag Checks",
+            f"Valuation: {master.get('Standalone Valuation Flag', '')}",
+            f"Business: {master.get('Standalone Business Flag', '')}",
+            f"Balance: {master.get('Standalone Balance Flag', '')}",
+            f"Dilution: {master.get('Standalone Dilution Flag', '')}",
             "",
             "Snapshot",
             f"Price: {master.get('Price', '')}  |  Market Cap: {master.get('Market Cap', '')}  |  EV: {master.get('EV', '')}",
@@ -1277,30 +1267,11 @@ class MainWindow(QMainWindow):
         bg = fg = None
         if col in SCORE_COLUMNS:
             bg, fg = score_colors(item.text())
-        elif col == "Final Rank":
-            bg, fg = flag_colors(str(row.get("Overall Flag", "")))
         elif col in FLAG_COLUMNS or col in {"Flag", "Quality Status", "Data Quality Flag"}:
             bg, fg = flag_colors(item.text())
         if bg is not None:
             item.setBackground(bg)
             item.setForeground(fg)
-
-    def refresh_score_detail_table(self, ticker=None) -> None:
-        rows = list_score_details(ticker=ticker)
-        self.score_detail_table.setSortingEnabled(False)
-        self.score_detail_table.setRowCount(len(rows))
-        for r, row in enumerate(rows):
-            set_row_ticker_header(self.score_detail_table, r, row.get("Ticker", ""))
-            for c, col in enumerate(self.score_detail_columns):
-                text = str(row.get(col, ""))
-                item = QTableWidgetItem(text)
-                self.apply_potential_colors(item, col, row)
-                self.score_detail_table.setItem(r, c, item)
-        self.score_detail_table.setSortingEnabled(True)
-        self.score_detail_table.setColumnHidden(0, True)
-        self.score_detail_table.resizeColumnsToContents()
-        self.score_detail_table.setColumnWidth(7, 520)
-        self.score_detail_table.setColumnWidth(14, 360)
 
     def refresh_data_quality_table(self, ticker=None) -> None:
         summary_rows = list_data_quality_summary(ticker=ticker)
@@ -1355,6 +1326,7 @@ class MainWindow(QMainWindow):
 
     def refresh_master_table(self) -> None:
         rows = list_master_watchlist()
+        self._master_rows = rows
         self.master_table.setSortingEnabled(False)
         self.master_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
@@ -1363,8 +1335,8 @@ class MainWindow(QMainWindow):
                 text = str(row.get(col, ""))
                 item = QTableWidgetItem(text)
                 self.apply_potential_colors(item, col, row)
-                if col == "Deep Dive Action":
-                    bg, fg = flag_colors(str(row.get("Overall Flag", "")))
+                if col == "Action":
+                    bg, fg = flag_colors(str(row.get("Review Status", "")))
                     if bg is not None:
                         item.setBackground(bg)
                         item.setForeground(fg)
@@ -1375,6 +1347,7 @@ class MainWindow(QMainWindow):
 
     def refresh_peer_table(self) -> None:
         rows = list_peer_comparison()
+        self._peer_rows = rows
         self.peer_table.setSortingEnabled(False)
         self.peer_table.setRowCount(len(rows))
         for r, row in enumerate(rows):
@@ -1389,45 +1362,67 @@ class MainWindow(QMainWindow):
         self.peer_table.resizeColumnsToContents()
 
     def refresh_hud_panel(self) -> None:
-        rows = list_master_watchlist()
-        peers = list_peer_comparison()
+        rows = getattr(self, "_master_rows", None)
+        if rows is None:
+            rows = list_master_watchlist()
+            self._master_rows = rows
 
-        def tickers_matching(prefix: str, limit: int = 20) -> str:
-            vals = [r["Ticker"] for r in rows if str(r.get("Overall Flag", "")).startswith(prefix)]
-            return ", ".join(vals[:limit]) if vals else "None"
+        peers = getattr(self, "_peer_rows", None)
+        if peers is None:
+            peers = list_peer_comparison()
+            self._peer_rows = peers
 
         def count_matching(prefix: str) -> int:
-            return sum(1 for r in rows if str(r.get("Overall Flag", "")).startswith(prefix))
+            return sum(1 for r in rows if str(r.get("Review Status", "")).startswith(prefix))
 
-        def score_value(row) -> int:
+        def data_score_value(row) -> int:
             try:
-                return int(row.get("Score") or 0)
+                return int(row.get("Data Score") or 0)
             except Exception:
                 return 0
 
-        ranked_rows = sorted(rows, key=score_value, reverse=True)
-        top_rows = [r for r in ranked_rows if score_value(r) > 0][:10]
-        deep_dive_rows = [r for r in ranked_rows if str(r.get("Overall Flag", "")).startswith("GREEN")]
-        need_data = [r for r in rows if str(r.get("Final Rank", "")) == "NEEDS DATA" or str(r.get("Overall Flag", "")).startswith("GRAY")]
-        high_quality_expensive = [r for r in ranked_rows if str(r.get("Quality Flag", "")).startswith("GREEN") and str(r.get("Valuation Flag", "")).startswith("RED")]
-        cheap_but_low_quality = [r for r in ranked_rows if str(r.get("Valuation Flag", "")).startswith("GREEN") and str(r.get("Quality Flag", "")).startswith("RED")]
-        cheapest = [p for p in peers if str(p.get("Relative Valuation Flag", "")).startswith("GREEN")]
-        strongest = [p for p in peers if str(p.get("Relative Quality Flag", "")).startswith("GREEN") or str(p.get("Relative Balance Flag", "")).startswith("GREEN")]
-        warnings = [r for r in rows if str(r.get("Data Confidence Flag", "")).startswith("GRAY") or str(r.get("Overall Flag", "")).startswith("GRAY")]
+        def status_rank(row) -> int:
+            status = str(row.get("Review Status", ""))
+            if status.startswith("GREEN"):
+                return 4
+            if status.startswith("YELLOW"):
+                return 3
+            if status.startswith("GRAY"):
+                return 2
+            if status.startswith("RED"):
+                return 1
+            return 0
 
-        best_deep_dive = deep_dive_rows[0] if deep_dive_rows else None
-        highest_score = top_rows[0] if top_rows else None
+        ranked_rows = sorted(rows, key=lambda row: (status_rank(row), data_score_value(row), str(row.get("Ticker", ""))), reverse=True)
+        top_rows = ranked_rows[:10]
+        ready_rows = [r for r in ranked_rows if str(r.get("Review Status", "")).startswith("GREEN")]
+        watch_rows = [r for r in ranked_rows if str(r.get("Review Status", "")).startswith("YELLOW")]
+        need_data = [r for r in rows if str(r.get("Review Status", "")).startswith("GRAY")]
+        red_flag_rows = [r for r in rows if str(r.get("Review Status", "")).startswith("RED")]
+        cheapest = [p for p in peers if str(p.get("Relative Valuation Flag", "")).startswith("GREEN")]
+        strongest = [
+            p for p in peers
+            if str(p.get("Relative Quality Flag", "")).startswith("GREEN")
+            or str(p.get("Relative Balance Flag", "")).startswith("GREEN")
+            or str(p.get("Relative Dilution Flag", "")).startswith("GREEN")
+        ]
+        warnings = need_data + red_flag_rows
+
+        best_ready = ready_rows[0] if ready_rows else None
+        highest_data = top_rows[0] if top_rows else None
         self.metric_total.setText(str(len(rows)))
-        self.metric_deep_dive.setText(str(len(deep_dive_rows)))
-        self.metric_deep_dive_sub.setText(f"best: {best_deep_dive['Ticker']}" if best_deep_dive else "green candidates")
+        self.metric_deep_dive.setText(str(len(ready_rows)))
+        self.metric_deep_dive_sub.setText(f"first: {best_ready['Ticker']}" if best_ready else "ready for peer gate")
         self.metric_watch.setText(str(count_matching("YELLOW")))
+        self.metric_watch_sub.setText("needs context")
         self.metric_data.setText(str(count_matching("GRAY")))
+        self.metric_data_sub.setText("fix before comparing")
 
         def chips_for(prefix: str) -> str:
-            matches = [r for r in rows if str(r.get("Overall Flag", "")).startswith(prefix)]
+            matches = [r for r in rows if str(r.get("Review Status", "")).startswith(prefix)]
             if not matches:
                 return "<span style='color:#7f8fa8;'>None</span>"
-            return " ".join(hud_ticker_chip(r["Ticker"], r.get("Overall Flag", "")) for r in matches[:18])
+            return " ".join(hud_ticker_chip(r["Ticker"], r.get("Review Status", "")) for r in matches[:18])
 
         def top_rows_html(items: list[dict]) -> str:
             if not items:
@@ -1438,9 +1433,9 @@ class MainWindow(QMainWindow):
                     "<tr>"
                     f"<td style='color:#8ea2bd; font-weight:800;'>{idx}</td>"
                     f"<td style='font-weight:950; color:#ffffff;'>{html_escape(row['Ticker'])}</td>"
-                    f"<td>{hud_score(row.get('Score', ''))}</td>"
-                    f"<td>{hud_pill(str(row.get('Overall Flag', '')))}</td>"
-                    f"<td style='color:#c7d7eb;'>{html_escape(row.get('Deep Dive Action', ''))}</td>"
+                    f"<td>{hud_score(row.get('Data Score', ''))}</td>"
+                    f"<td>{hud_pill(str(row.get('Review Status', '')))}</td>"
+                    f"<td style='color:#c7d7eb;'>{html_escape(row.get('Action', ''))}</td>"
                     "</tr>"
                 )
             return "".join(body)
@@ -1456,9 +1451,9 @@ class MainWindow(QMainWindow):
                 "</div>"
             )
 
-        headline_name = best_deep_dive["Ticker"] if best_deep_dive else (highest_score["Ticker"] if highest_score else "None")
-        headline_score = best_deep_dive.get("Score", "") if best_deep_dive else (highest_score.get("Score", "") if highest_score else "")
-        headline_label = "Best deep-dive candidate" if best_deep_dive else "Highest score"
+        headline_name = best_ready["Ticker"] if best_ready else (highest_data["Ticker"] if highest_data else "None")
+        headline_score = best_ready.get("Data Score", "") if best_ready else (highest_data.get("Data Score", "") if highest_data else "")
+        headline_label = "First ready for Peer Gate" if best_ready else "Highest data confidence"
         warnings_count = len(warnings)
         html_text = f"""
         <html>
@@ -1591,34 +1586,34 @@ class MainWindow(QMainWindow):
         <body>
         <div class="shell">
             <div class="hero">
-                <div class="eyebrow">Executive Signal Board</div>
+                <div class="eyebrow">Workflow Signal Board</div>
                 <div class="headline">{headline_label}: {html_escape(headline_name)} {hud_score(headline_score) if headline_score else ""}</div>
-                <div class="subline">Color reads: green = stronger potential, yellow = needs context, purple = speculative, gray = fix data, red = avoid unless the catalyst is exceptional.</div>
+                <div class="subline">Color reads: green = ready for Peer Gate, yellow = needs context, gray = fix data, red = stop unless the thesis explains the risk.</div>
                 <div class="tile-row">
                     <div class="tile"><div class="tile-label">Universe</div><div class="tile-value">{len(rows)}</div><div class="tile-sub">tracked tickers</div></div>
-                    <div class="tile"><div class="tile-label">Deep Dive</div><div class="tile-value">{len(deep_dive_rows)}</div><div class="tile-sub">{html_escape('best: ' + best_deep_dive['Ticker']) if best_deep_dive else 'green candidates'}</div></div>
-                    <div class="tile"><div class="tile-label">Watch</div><div class="tile-value">{count_matching("YELLOW")}</div><div class="tile-sub">needs context</div></div>
-                    <div class="tile"><div class="tile-label">Data / Risk</div><div class="tile-value">{warnings_count}</div><div class="tile-sub">warning rows</div></div>
+                    <div class="tile"><div class="tile-label">Peer Ready</div><div class="tile-value">{len(ready_rows)}</div><div class="tile-sub">{html_escape('first: ' + best_ready['Ticker']) if best_ready else 'green rows'}</div></div>
+                    <div class="tile"><div class="tile-label">Watch</div><div class="tile-value">{len(watch_rows)}</div><div class="tile-sub">needs context</div></div>
+                    <div class="tile"><div class="tile-label">Data / Red Flag</div><div class="tile-value">{warnings_count}</div><div class="tile-sub">warning rows</div></div>
                 </div>
             </div>
 
-            <div class="section-title">Top Opportunities by Score</div>
+            <div class="section-title">Current Workflow Queue</div>
             <table>
-                <tr><th>#</th><th>Ticker</th><th>Score</th><th>Overall Flag</th><th>Action</th></tr>
+                <tr><th>#</th><th>Ticker</th><th>Data Score</th><th>Review Status</th><th>Action</th></tr>
                 {top_rows_html(top_rows)}
             </table>
 
             <div class="section-title">Decision Buckets</div>
-            <div class="bucket"><div class="bucket-label">Deep-dive candidates</div>{chips_for("GREEN")}</div>
-            <div class="bucket"><div class="bucket-label">Speculative catalyst names</div>{chips_for("PURPLE")}</div>
+            <div class="bucket"><div class="bucket-label">Ready for Peer Gate</div>{chips_for("GREEN")}</div>
             <div class="bucket"><div class="bucket-label">Watchlist names</div>{chips_for("YELLOW")}</div>
-            <div class="bucket"><div class="bucket-label">Fix data / skip warnings</div>{chips_for("GRAY")} {chips_for("RED")}</div>
+            <div class="bucket"><div class="bucket-label">Fix data</div>{chips_for("GRAY")}</div>
+            <div class="bucket"><div class="bucket-label">Red flag stop</div>{chips_for("RED")}</div>
 
             <div class="section-title">Research Alerts</div>
-            {compact_list("Needs Better Data", [f"{html_escape(r['Ticker'])}: score {html_escape(r.get('Score', ''))}; {html_escape(r.get('Missing / Weak Areas', ''))}" for r in need_data])}
-            {compact_list("High Quality but Expensive", [f"{html_escape(r['Ticker'])}: {html_escape(r.get('Quality Flag', ''))}; {html_escape(r.get('Valuation Flag', ''))}" for r in high_quality_expensive])}
-            {compact_list("Cheap but Low Quality", [f"{html_escape(r['Ticker'])}: {html_escape(r.get('Valuation Flag', ''))}; {html_escape(r.get('Quality Flag', ''))}" for r in cheap_but_low_quality])}
-            {compact_list("Peer Signals", [f"{html_escape(p['Ticker'])}: {html_escape(p['Peer Group'])}; {html_escape(p.get('Relative Valuation Flag', ''))}" for p in cheapest[:8]] + [f"{html_escape(p['Ticker'])}: quality {html_escape(p.get('Relative Quality Flag', ''))}; balance {html_escape(p.get('Relative Balance Flag', ''))}" for p in strongest[:8]])}
+            {compact_list("Needs Better Data", [f"{html_escape(r['Ticker'])}: {html_escape(r.get('Data Confidence Flag', ''))}; {html_escape(r.get('Missing / Weak Areas', ''))}" for r in need_data])}
+            {compact_list("Standalone Red Flags", [f"{html_escape(r['Ticker'])}: {html_escape(r.get('Red Flags', ''))}" for r in red_flag_rows])}
+            {compact_list("Watch Items", [f"{html_escape(r['Ticker'])}: {html_escape(r.get('Watch Items', ''))}" for r in watch_rows])}
+            {compact_list("Peer Signals", [f"{html_escape(p['Ticker'])}: {html_escape(p['Peer Group'])}; {html_escape(p.get('Relative Valuation Flag', ''))}" for p in cheapest[:8]] + [f"{html_escape(p['Ticker'])}: quality {html_escape(p.get('Relative Quality Flag', ''))}; balance {html_escape(p.get('Relative Balance Flag', ''))}; dilution {html_escape(p.get('Relative Dilution Flag', ''))}" for p in strongest[:8]])}
         </div>
         </body>
         </html>
@@ -1628,7 +1623,6 @@ class MainWindow(QMainWindow):
     def refresh_all_tables(self, ticker=None) -> None:
         self.refresh_watchlist()
         self.refresh_master_table()
-        self.refresh_score_detail_table(ticker)
         self.refresh_data_quality_table(ticker)
         self.refresh_peer_table()
         self.refresh_cache_table(ticker)

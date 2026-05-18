@@ -59,10 +59,10 @@ The app currently supports:
 - Historical fundamentals table from SEC annual companyfacts rows.
 - Price history table.
 - Price trend metrics: 52-week high/low, returns, drawdown, momentum, and volatility.
-- Model readiness scoring.
+- Model readiness checks.
 - Master Watchlist screening view.
-- Score Details view.
 - Data Quality view.
+- Red Flag and Peer Gate workflow views.
 - Peer Comparison view.
 - Full pipeline for one selected ticker.
 - Full pipeline for all active tickers.
@@ -75,12 +75,14 @@ The app uses two local database files:
 
 | File | Purpose | Safe to delete? |
 |---|---|---|
-| `tech_screener.db` | Watchlist, tickers, peer groups, SEC/Finnhub cache, market data, historical fundamentals, price history, readiness/scoring data | Deletes stock/research data only |
+| `tech_screener.db` | Watchlist, tickers, peer groups, SEC/Finnhub cache, market data, historical fundamentals, price history, readiness, and workflow data | Deletes stock/research data only |
 | `personal_settings.db` | SEC User-Agent, Finnhub API key, app settings | Deletes API/personal settings only |
 
 Both files are local-only and ignored by Git through `*.db` rules.
 
 Do not commit database files, API keys, caches, logs, virtual environments, or generated build outputs.
+
+The detailed product workflow spec lives at `docs/product_workflow_spec.txt`. Use that file as the build blueprint for the screener flow and Step 4 risk/reward model.
 
 ## Target Workflow
 
@@ -88,17 +90,16 @@ The app should use a screener-first sector workflow, not a generic business-scho
 
 Current target workflow:
 
-1. **Sector Funnel**
-2. **Flag Review**
-3. **Numbers Gate**
-4. **Peer Gate**
-5. **Valuation Gate**
-6. **Risk Gate**
-7. **Sector Fit Check**
-8. **Decision**
-9. **Portfolio Fit**
+0. **Idea Entry**
+1. **Data Check**
+2. **Red Flag Check**
+3. **Peer Gate**
+4. **Risk / Reward vs ETF**
+5. **Decision / Action**
 
-Each gate should end with one of these results:
+The app's job is to decide whether a ticker is worth leaving the screener for deeper company research. It should not try to replace the company research memo.
+
+Each decision step should end with one of these results:
 
 ```text
 Continue
@@ -114,41 +115,64 @@ Meaning:
 
 ## Gate Definitions
 
-### 0. Sector Funnel
+### 0. Idea Entry
 
-Purpose: screen all tickers in a sector or peer group and decide which names deserve deeper work.
+Purpose: pick the ticker to review.
 
-This is where all tickers live. This is not a single-company deep dive. It includes the overview, master watchlist, and data quality views.
+This includes Sector Funnel and Flag Review.
 
-Main question:
+Sector Funnel answers:
 
 ```text
 Inside this sector/theme, which tickers are worth testing further?
 ```
 
-### 1. Flag Review
-
-Purpose: understand why the app flagged the ticker before doing manual research.
-
-Main question:
+Flag Review answers:
 
 ```text
 Why did the app flag this stock, and is that flag based on clean data?
 ```
 
-This step should look at the app's bucket, score, strongest signal, weakest signal, and data quality.
+This step should not prove the company is good. It only chooses what deserves the next checks.
 
-### 2. Numbers Gate
+### 1. Data Check
 
-Purpose: decide whether the financials support more work.
+Purpose: decide whether the local data is clean enough to compare the ticker against peers.
 
 Main question:
 
 ```text
-Are the numbers strong enough to justify going further?
+Is the app's data reliable enough for peer comparison?
 ```
 
-This gate uses historical fundamentals, market data, score details, and model readiness.
+This gate should not decide whether margins, valuation, balance sheet, or dilution are good. Those judgments need peer context. Data Check only catches missing data, weak source coverage, and obvious reliability problems before Peer Gate.
+
+Data Check should include:
+
+- Data Score.
+- Missing core data.
+- Source quality.
+- Peer group assigned or missing.
+
+### 2. Red Flag Check
+
+Purpose: catch obvious danger before peer comparison.
+
+Main question:
+
+```text
+Is anything obviously dangerous before we spend more time?
+```
+
+Red Flag Check should include:
+
+- Negative free cash flow with short cash runway.
+- Extreme dilution.
+- Dangerous liquidity.
+- Missing core data.
+- No peer group assigned.
+
+This step is not trying to find good companies. It only catches obvious reasons to stop or demand proof.
 
 ### 3. Peer Gate
 
@@ -160,62 +184,86 @@ Main question:
 Is this flagged company actually better than the other available choices?
 ```
 
-### 4. Valuation Gate
+This gate compares valuation, quality, balance sheet, dilution, and free-cash-flow strength against the peer group. The app should avoid calling a company "good" from isolated raw numbers alone.
 
-Purpose: check whether the future is already priced into the stock.
+### 4. Risk / Reward vs ETF
 
-Main question:
-
-```text
-Can the stock still go up enough from today's price to justify the risk?
-```
-
-### 5. Risk Gate
-
-Purpose: identify why this may be the wrong company to own for the sector.
+Purpose: decide whether the possible upside is worth the downside and better than the ETF alternative.
 
 Main question:
 
 ```text
-What could make this the wrong vehicle for the sector?
+If the company does worse, normal, or better than expected, what could the stock be worth?
 ```
 
-Supporting filing review belongs here. The user should not read filings deeply for every ticker. Filing review is only worth doing if earlier gates justify more work.
+Risk / Reward should include:
 
-### 6. Sector Fit Check
+- Bear, base, and bull cases.
+- Historical data to estimate business performance assumptions.
+- Peer multiples to estimate what the market may pay.
+- Four valuation methods: EV/Revenue, EV/FCF, P/E, and DCF.
+- Weighted blended value, not a blind average.
+- Current-price upside/downside.
+- ETF bear/base/bull comparison.
 
-Purpose: after the screener, numbers, peers, valuation, and risks, answer the manual sector-fit question.
+ETF comparison question:
+
+```text
+Is the single stock worth the extra risk compared with the easier ETF choice?
+```
+
+### 5. Decision / Action
+
+Purpose: summarize the app's checks and decide the next move.
 
 Main question:
 
 ```text
-After checking the data, is this actually the right company for my sector thesis?
+Should I leave the screener and do real company research?
 ```
 
-This combines the older Exposure, Leader, and Proof gates into one final manual check:
-
-- Does this company give the desired sector exposure?
-- Is it one of the better public companies in the sector?
-- Is there real proof, or just a future story?
-
-### 7. Decision
-
-Purpose: place the ticker in a research bucket.
-
-Options:
+Decision buckets:
 
 ```text
 Pass
-Watch
-Deep Dive More
+Watchlist
+Deep Dive
 Candidate Position
 ```
 
-### 8. Portfolio Fit
+Meaning:
 
-Purpose: only after a ticker becomes a candidate position, decide size and concentration.
+- **Pass** means not worth more time right now.
+- **Watchlist** means interesting, but needs better price, cleaner data, or a catalyst.
+- **Deep Dive** means the ticker earned serious company research outside the screener.
+- **Candidate Position** should only happen after deeper research, thesis, valuation, risk, ETF alternative, and kill criteria are clear.
 
-This is where time horizon, portfolio role, theme exposure, max position size, ETF alternative, and rebalance decision belong.
+Step 5 should summarize:
+
+```text
+Data Check:
+Red Flag Check:
+Peer Gate:
+Risk / Reward vs ETF:
+Decision:
+Reason:
+Next action:
+```
+
+## After The Screener
+
+If Step 5 says Deep Dive, the user leaves the screener and starts company research.
+
+Company research belongs in a separate memo/research phase:
+
+- Understand the business.
+- Read filings.
+- Build or refine valuation assumptions.
+- Identify the variant view.
+- Write the pre-mortem.
+- Decide Pass, Watchlist, or Candidate Position.
+
+Portfolio sizing belongs after a ticker becomes a true Candidate Position.
 
 ## Supporting Data Views
 
@@ -225,7 +273,6 @@ Current supporting views:
 
 - Historical Fundamentals
 - Market Data
-- Score Details
 - Model Readiness
 - Peer Comparison
 - API Cache
@@ -245,7 +292,7 @@ The left-side action panel should only show:
 - Save API Settings
 - Delete Selected Ticker
 
-The old separate buttons should stay removed from the visible UI:
+Advanced maintenance actions should stay out of the primary action panel:
 
 - Repair Missing Data
 - Rebuild SEC History
@@ -274,10 +321,10 @@ Sebastiaan Vriese savriese@gmail.com
 6. Run **Run Full Pipeline** for one selected ticker, or **Run Full Pipeline For All Active** for the whole active watchlist.
 7. Use **Sector Funnel** to find which names are flagged.
 8. Use **Flag Review** to understand why the app flagged the ticker.
-9. Work through Numbers, Peer, Valuation, and Risk gates.
-10. Use **Sector Fit Check** only after the ticker has survived the earlier data checks.
-11. Use **Decision** to bucket the ticker.
-12. Use **Portfolio Fit** only if the ticker becomes a candidate position.
+9. Work through **Data Check**, **Red Flag Check**, **Peer Gate**, and **Risk / Reward vs ETF**.
+10. Use **Decision / Action** to decide Pass, Watchlist, Deep Dive, or Candidate Position.
+11. If the decision is **Deep Dive**, leave the screener and start company research.
+12. Use portfolio sizing only after the ticker becomes a true candidate position.
 
 ## Pipeline Scope
 
@@ -335,13 +382,13 @@ Needed:
 
 ### 3. Clean code structure
 
-The active app currently uses a streamlined launch path in `main.py` that subclasses the base UI. This works, but the long-term cleanup should be to move the streamlined UI code into a proper module and remove dead/unused UI paths.
+The app should have one clear window entry point and keep workflow UI code in a dedicated module once the layout is stable.
 
 Needed:
 
 - Keep only one real app window class.
-- Move active UI customization out of `main.py` once stable.
-- Remove old visible-button logic from base UI if it is no longer used.
+- Move workflow UI customization out of `main.py` once stable.
+- Remove unused visible-button logic if it is no longer used.
 - Keep `main.py` small: import the app class and launch it.
 - Confirm there are no unused wrapper files.
 
@@ -400,15 +447,15 @@ Needed:
 - ADR/share-count conversion awareness.
 - Better disclosure notes for partial SBC, R&D, SG&A, and share-count coverage.
 
-### 9. Scoring transparency
+### 9. Workflow transparency
 
-Partially added: Score Details explains component scores and rationale.
+Partially added: the workflow now separates data checks, standalone red flags, and peer-relative comparisons.
 
 Still needed:
 
-- Scoring version labels.
-- Rule-by-rule point attribution.
-- More detailed drill-downs for valuation, quality, balance sheet, dilution, and FCF.
+- Version labels for workflow rules.
+- Rule-by-rule rationale for red-flag checks.
+- More detailed peer-relative drill-downs for valuation, quality, balance sheet, dilution, and FCF.
 
 ### 10. Peer group improvements
 
@@ -437,7 +484,7 @@ Needed:
 - Unit tests for SEC concept mapping.
 - Unit tests for Finnhub response mapping.
 - Unit tests for normalization.
-- Unit tests for readiness scoring.
+- Unit tests for readiness checks.
 - Unit tests for peer comparison.
 - Regression tests for foreign issuers such as TSM.
 - Smoke test for launching the PySide app.
@@ -448,7 +495,7 @@ Needed:
 
 ## Do Not Add Yet
 
-Do not add these until the data pipeline and scoring are more stable:
+Do not add these until the data pipeline and workflow rules are more stable:
 
 - Automated buy/sell recommendations.
 - Broker integration.

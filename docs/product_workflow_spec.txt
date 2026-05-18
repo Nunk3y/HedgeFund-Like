@@ -1,0 +1,536 @@
+Stock Screener Workflow: Data Check, Red Flags, Peer Gate, Risk / Reward, Decision
+=================================================================================
+
+Purpose
+-------
+
+This workflow is meant to help rank research ideas. It is not a buy signal.
+
+The goal is to avoid pretending one early score can tell whether a company is
+good. Most financial numbers only become meaningful after comparing the company
+with similar companies.
+
+Simple idea:
+
+    Data tells us whether we can trust the numbers.
+    Red flags tell us whether something is obviously dangerous.
+    Peers tell us whether the company is better or worse than alternatives.
+    Risk / Reward tells us whether the possible upside is worth the downside.
+    Decision / Action tells us whether to leave the app and do real research.
+
+
+Final App Workflow
+------------------
+
+0. Idea Entry
+    Pick a ticker from Sector Funnel or Flag Review.
+
+1. Data Check
+    Can we trust the app's data enough to continue?
+
+2. Red Flag Check
+    Is anything obviously dangerous before peer comparison?
+
+3. Peer Gate
+    Is this company actually better than similar companies?
+
+4. Risk / Reward vs ETF
+    Is the upside worth the downside and better than the ETF alternative?
+
+5. Decision / Action
+    Should I leave the screener and do real company research?
+
+
+1. Data Check
+-------------
+
+Main question:
+
+    Can we trust the app's data enough to continue?
+
+This happens before peer comparison.
+
+What belongs here:
+
+    Data Score
+        Can the app trust the local data?
+
+    Missing data
+        Are key fields missing, such as revenue, cash, debt, shares, price, or
+        free cash flow?
+
+    Source quality
+        Did the data come from usable local sources?
+
+    Peer group assigned
+        Does the ticker have a peer group so the app can compare it properly?
+
+What this step should NOT decide:
+
+    It should not decide whether margins, valuation, balance sheet, or dilution
+    are good. Those need peer context.
+
+Possible result:
+
+    Continue
+    Needs Proof
+    Pass For Now
+
+
+2. Red Flag Check
+-----------------
+
+Main question:
+
+    Is anything obviously dangerous before we even compare peers?
+
+This is not trying to find "good" companies. It only catches obvious danger.
+
+Red flags to check:
+
+    Negative free cash flow with short cash runway
+        The company may need to raise money soon.
+
+    Extreme dilution
+        Shareholders may be getting watered down badly.
+
+    Dangerous liquidity
+        Cash, debt, or current ratio may point to financial stress.
+
+    Missing core data
+        The app cannot trust the review.
+
+    No peer group
+        The app cannot judge quality or valuation correctly.
+
+Possible result:
+
+    Continue
+    Needs Proof
+    Pass For Now
+
+
+3. Peer Gate
+------------
+
+Main question:
+
+    Is this company actually better than similar companies?
+
+This is where company numbers become meaningful. A company does not have one
+universal "healthy" number for margins, valuation, balance sheet, dilution, or
+free cash flow. Those numbers need to be compared with similar companies.
+
+Peer Gate should compare:
+
+    Quality
+        Are margins, profitability, and cash conversion better or worse than
+        the peer group?
+
+    Valuation
+        Is the market paying less, similar, or more for this company compared
+        with peers using EV/Revenue, EV/FCF, P/S, P/E, and other available
+        multiples?
+
+    Balance sheet
+        Does the company have a stronger or weaker financial cushion than
+        similar companies?
+
+    Dilution
+        Is the company creating fewer, similar, or more new shares than peers?
+
+    Free cash flow
+        Is free-cash-flow strength better, worse, or average compared with
+        similar companies?
+
+Peer Gate should answer:
+
+    Is this stock better, worse, or average compared with alternatives?
+
+
+4. Risk / Reward Tab
+--------------------
+
+Main question:
+
+    If this company does worse, normal, or better than expected, what could the
+    stock be worth?
+
+This does not predict the future perfectly. It creates a rough value range.
+
+
+4A. Build Scenarios From History
+--------------------------------
+
+The app looks at historical company data.
+
+Bear case:
+    The company underperforms.
+
+    Uses:
+        Weak historical growth
+        Weak historical margins
+        Stress haircut if recent history had no bad years
+
+Base case:
+    The company stays on track.
+
+    Uses:
+        Normal or median historical growth
+        Normal or median historical margins
+
+Bull case:
+    The company overperforms.
+
+    Uses:
+        Strong historical growth
+        Strong historical margins
+
+Example:
+
+    Historical revenue growth:
+        Year 1: 12%
+        Year 2: 18%
+        Year 3: 22%
+
+    Scenario assumptions:
+        Bear: 6% growth
+        Base: 17% growth
+        Bull: 22% growth
+
+Important rule:
+
+    If the company had no bad years recently, the bear case should not pretend
+    risk does not exist. The app should apply a stress haircut.
+
+
+4B. Use Peer Multiples
+----------------------
+
+Peers help estimate what the market might pay for the company's future
+performance.
+
+Simple rule:
+
+    Bear multiple:
+        Below peer median
+
+    Base multiple:
+        Near peer median
+
+    Bull multiple:
+        Above peer median
+
+History tells us how the business might perform.
+Peers tell us what that performance might be worth.
+
+
+4C. Run Four Valuation Models
+-----------------------------
+
+For each scenario, the app estimates value four ways.
+
+1. EV/Revenue
+
+    Plain English:
+        What is the company worth based on sales?
+
+    Simple formula:
+        Future Revenue = Current Revenue * (1 + growth rate) ^ years
+        Future EV = Future Revenue * EV/Revenue multiple
+        Equity Value = Future EV + Cash - Debt
+        Estimated Price = Equity Value / Future Shares
+
+2. EV/FCF
+
+    Plain English:
+        What is the company worth based on cash it keeps?
+
+    Simple formula:
+        Future FCF = Future Revenue * FCF margin
+        Future EV = Future FCF * EV/FCF multiple
+        Equity Value = Future EV + Cash - Debt
+        Estimated Price = Equity Value / Future Shares
+
+3. P/E
+
+    Plain English:
+        What is the company worth based on earnings?
+
+    Simple formula:
+        Future Earnings = Future Revenue * net margin
+        Equity Value = Future Earnings * P/E multiple
+        Estimated Price = Equity Value / Future Shares
+
+4. DCF
+
+    Plain English:
+        What is the company worth based on future cash flows?
+
+    Simple formula:
+        Estimate future free cash flow for several years.
+        Discount those cash flows back to today.
+        Add terminal value.
+        Add cash and subtract debt.
+        Divide by future shares.
+
+Important rule:
+
+    The app should not simple-average all four methods blindly.
+    Each method should get a reliability weight.
+
+Example reliability:
+
+    EV/Revenue:
+        More useful for growth companies or companies with weak profits.
+
+    EV/FCF:
+        More useful when free cash flow is positive and stable.
+
+    P/E:
+        More useful when earnings are positive and meaningful.
+
+    DCF:
+        More useful when cash flows are stable enough to forecast.
+
+
+4D. Blend The Values
+--------------------
+
+Each scenario gets values from the four models.
+
+Example:
+
+    Scenario    EV/Revenue    EV/FCF    P/E     DCF     Blended Value
+    Bear        $70           $65       $72     $68     $69
+    Base        $115          $122      $118    $110    $116
+    Bull        $160          $172      $165    $150    $162
+
+The blended value should be a weighted average.
+
+Weak or unreliable methods count less.
+Skipped methods count zero.
+
+
+4E. Compare To Current Price
+----------------------------
+
+Example:
+
+    Current price: $100
+
+    Bear value: $69
+    Bear downside: -31%
+
+    Base value: $116
+    Base upside: +16%
+
+    Bull value: $162
+    Bull upside: +62%
+
+Formula:
+
+    Upside or downside = Estimated Value / Current Price - 1
+
+
+4F. Risk / Reward Conclusion
+----------------------------
+
+The app should give a plain-English conclusion.
+
+Possible labels:
+
+    Weak
+        Base upside is small and bear downside is large.
+
+    Okay
+        Base upside is decent, but downside is meaningful.
+
+    Strong
+        Base upside is attractive and bear downside is survivable.
+
+    Speculative
+        Only the bull case works.
+
+Final Risk / Reward output:
+
+    Bear downside
+    Base upside
+    Bull upside
+    Expected value
+    Risk/reward label
+    Key assumption
+
+
+4G. Compare Against The ETF Alternative
+---------------------------------------
+
+Main question:
+
+    Is the single stock worth owning instead of the easier ETF alternative?
+
+This is important because a stock can look attractive by itself but still not
+be worth the extra single-company risk.
+
+The app should compare:
+
+    Stock bear / base / bull
+    vs
+    ETF bear / base / bull
+
+Example:
+
+    Scenario    Stock Value    Stock Return    ETF Return    Stock Advantage
+    Bear        $69            -31%            -18%          -13% worse
+    Base        $116           +16%            +12%          +4% better
+    Bull        $162           +62%            +30%          +32% better
+
+Plain-English read:
+
+    If the stock only gives a little more base-case upside than the ETF, but has
+    much worse bear-case downside, it may not be worth the risk.
+
+    If the stock gives much better base-case upside than the ETF and the bear
+    case is survivable, it may deserve a deeper look.
+
+How the app can estimate ETF scenarios:
+
+    Bear ETF case:
+        Use recent bad-period return, max drawdown, or downside volatility.
+
+    Base ETF case:
+        Use normal historical return over the selected lookback period.
+
+    Bull ETF case:
+        Use strong-period return or upside momentum over the selected lookback
+        period.
+
+Decision rule:
+
+    The stock should usually need at least one of these:
+
+        Clearly better base-case upside than the ETF
+        Similar upside but better downside risk
+        Much better bull case with survivable bear case
+        A specific catalyst the ETF does not capture
+
+If none of those are true:
+
+    The ETF may be the better choice.
+
+
+5. Decision / Action
+--------------------
+
+Main question:
+
+    Should I leave the screener and do real company research?
+
+This is not another math step. It is the handoff point.
+
+The app should summarize:
+
+    Data Check
+        Clean enough / needs proof / pass
+
+    Red Flag Check
+        No obvious danger / needs proof / pass
+
+    Peer Gate
+        Strong vs peers / mixed / weak
+
+    Risk / Reward vs ETF
+        Strong / okay / weak / speculative
+
+    Decision
+        Pass / Watchlist / Deep Dive / Candidate Position
+
+Decision buckets:
+
+    Pass
+        Not worth more time right now.
+
+    Watchlist
+        Interesting, but needs a better price, cleaner data, or a catalyst.
+
+    Deep Dive
+        The ticker earned serious company research outside the screener.
+
+    Candidate Position
+        Only after deeper research, thesis, valuation, risk, ETF alternative,
+        and kill criteria are clear.
+
+Example:
+
+    Data Check: Continue
+    Red Flag Check: Continue
+    Peer Gate: Strong vs peers
+    Risk / Reward vs ETF: Strong
+    Decision: Deep Dive
+    Reason: Worth leaving the screener for company research.
+    Next action: Read 10-K business section and risk factors.
+
+Another example:
+
+    Data Check: Continue
+    Red Flag Check: Continue
+    Peer Gate: Mixed
+    Risk / Reward vs ETF: Weak
+    Decision: Pass
+    Reason: ETF gives similar upside with less single-company risk.
+    Next action: Use ETF or review another ticker.
+
+
+After The Screener
+------------------
+
+If the decision is Deep Dive, the user leaves the screener and starts company
+research.
+
+Company research belongs in a separate memo/research phase:
+
+    Understand the business.
+    Read filings.
+    Build or refine valuation assumptions.
+    Identify the variant view.
+    Write the pre-mortem.
+    Decide Pass, Watchlist, or Candidate Position.
+
+Portfolio sizing belongs after a ticker becomes a true Candidate Position.
+
+
+Simple Summary
+--------------
+
+Idea Entry:
+    Pick the ticker to review from Sector Funnel or Flag Review.
+
+Data Check:
+    Can we trust the numbers?
+
+Red Flag Check:
+    Is anything obviously dangerous?
+
+Peer Gate:
+    Is this company better than similar companies?
+
+Risk / Reward:
+    If the company does worse, normal, or better, is the possible upside worth
+    the possible downside?
+
+ETF Alternative:
+    Is the stock worth the extra single-company risk compared with the easier
+    ETF choice?
+
+Decision / Action:
+    Is this worth leaving the screener for deeper company research?
+
+Short version:
+
+    History says how the business might perform.
+    Peers say what that performance might be worth.
+    Current price tells us whether the upside is worth the downside.
+    The ETF comparison tells us whether the stock is worth owning instead of
+    the basket.
+    The decision step tells us whether to pass, watch, deep dive, or consider a
+    candidate position after real research.
